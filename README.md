@@ -46,7 +46,7 @@ Cliente → [slug].vercel.app (formulario público)
 ```bash
 git clone https://github.com/schyzoid07/ticketapp-front.git
 cd ticketapp-front
-npm install
+pnpm install
 ```
 
 Crea un archivo `.env.local` basado en `.env.example`:
@@ -65,7 +65,7 @@ Ejecuta las migraciones SQL del backend (`00001_initial_schema.sql`, `00002_add_
 Inicia el servidor:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 ## Funcionalidades
