@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Inbox } from 'lucide-react';
 import { TicketCard } from './ticket-card';
 
 interface Ticket {
@@ -60,17 +61,24 @@ export function TicketList({ initialTickets, companyId }: { initialTickets: Tick
 
   if (tickets.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-300 p-12 text-center">
-        <p className="text-gray-500">No hay tickets aún</p>
-        <a href="/" className="mt-2 inline-block text-sm font-medium text-blue-600 hover:text-blue-800">
-          Crear el primer ticket
+      <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-white/50 px-4 py-20">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200">
+          <Inbox className="h-6 w-6 text-gray-400" />
+        </div>
+        <p className="text-sm font-medium text-gray-500">No hay tickets</p>
+        <p className="mt-1 text-xs text-gray-400">Crea tu primer ticket para empezar</p>
+        <a
+          href="/"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-md"
+        >
+          Nuevo ticket
         </a>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {tickets.map((ticket) => (
         <TicketCard key={ticket.id} ticket={ticket} />
       ))}

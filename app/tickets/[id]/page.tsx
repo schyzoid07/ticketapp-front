@@ -1,33 +1,38 @@
 import { getTicket } from '@/app/actions/tickets';
 import { notFound } from 'next/navigation';
+import {
+  ArrowLeft,
+  Bug,
+  CreditCard,
+  KeyRound,
+  Lightbulb,
+  HelpCircle,
+  Tag,
+  BrainCircuit,
+  MessageSquareText,
+  Clock,
+} from 'lucide-react';
 
-const categoryLabels: Record<string, string> = {
-  SOFTWARE_BUG: 'Bug de Software',
-  BILLING: 'Facturación',
-  ACCOUNT_ACCESS: 'Acceso a Cuenta',
-  FEATURE_REQUEST: 'Solicitud de Funcionalidad',
-  GENERAL_INQUIRY: 'Consulta General',
+const categoryMeta: Record<string, { icon: typeof Bug; label: string; gradient: string }> = {
+  SOFTWARE_BUG: { icon: Bug, label: 'Bug de Software', gradient: 'from-red-500 to-rose-600' },
+  BILLING: { icon: CreditCard, label: 'Facturación', gradient: 'from-emerald-500 to-teal-600' },
+  ACCOUNT_ACCESS: { icon: KeyRound, label: 'Acceso a Cuenta', gradient: 'from-amber-500 to-orange-600' },
+  FEATURE_REQUEST: { icon: Lightbulb, label: 'Sugerencia', gradient: 'from-violet-500 to-purple-600' },
+  GENERAL_INQUIRY: { icon: HelpCircle, label: 'Consulta', gradient: 'from-blue-500 to-cyan-600' },
 };
 
-const priorityLabels: Record<string, string> = {
-  '1': 'Baja',
-  '2': 'Media',
-  '3': 'Alta',
-  '4': 'Crítica',
+const priorityMeta: Record<number, { label: string; color: string }> = {
+  1: { label: 'Baja', color: 'bg-gray-100 text-gray-600' },
+  2: { label: 'Media', color: 'bg-blue-50 text-blue-600' },
+  3: { label: 'Alta', color: 'bg-amber-50 text-amber-600' },
+  4: { label: 'Crítica', color: 'bg-red-50 text-red-600' },
 };
 
-const priorityColors: Record<string, string> = {
-  '1': 'bg-gray-100 text-gray-700',
-  '2': 'bg-blue-100 text-blue-700',
-  '3': 'bg-yellow-100 text-yellow-700',
-  '4': 'bg-red-100 text-red-700',
-};
-
-const statusColors: Record<string, string> = {
-  PENDING_TRIAGE: 'bg-purple-100 text-purple-700',
-  OPEN: 'bg-blue-100 text-blue-700',
-  RESOLVED: 'bg-green-100 text-green-700',
-  CLOSED: 'bg-gray-100 text-gray-500',
+const statusMeta: Record<string, { label: string; color: string }> = {
+  PENDING_TRIAGE: { label: 'Analizando', color: 'bg-purple-50 text-purple-600' },
+  OPEN: { label: 'Abierto', color: 'bg-blue-50 text-blue-600' },
+  RESOLVED: { label: 'Resuelto', color: 'bg-emerald-50 text-emerald-600' },
+  CLOSED: { label: 'Cerrado', color: 'bg-gray-100 text-gray-500' },
 };
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -46,50 +51,69 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     minute: '2-digit',
   });
 
+  const cat = ticket.category ? categoryMeta[ticket.category] : null;
+  const pri = priorityMeta[ticket.priority ?? 0];
+  const st = statusMeta[ticket.status] ?? { label: ticket.status, color: 'bg-gray-100 text-gray-500' };
+
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-12">
-      <a href="/dashboard" className="mb-6 inline-block text-sm font-medium text-blue-600 hover:text-blue-800">
-        &larr; Volver al dashboard
+    <div className="mx-auto w-full max-w-3xl px-4 py-12">
+      <a
+        href="/dashboard"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Volver
       </a>
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="border-b border-gray-200 p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{ticket.title}</h1>
-              <p className="mt-1 text-sm text-gray-500">Creado el {date}</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusColors[ticket.status] || 'bg-gray-100 text-gray-700'}`}>
-                {ticket.status.replace(/_/g, ' ')}
-              </span>
-              {ticket.priority && (
-                <span className={`rounded-full px-3 py-1 text-xs font-medium ${priorityColors[String(ticket.priority)]}`}>
-                  {priorityLabels[String(ticket.priority)]}
+      <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+        {/* Header */}
+        <div className="border-b border-border bg-gradient-to-br from-gray-50 to-white p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl font-bold text-gray-900">{ticket.title}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-xs font-medium ${st.color}`}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                  {st.label}
                 </span>
-              )}
+                {ticket.priority && (
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-xs font-medium ${pri.color}`}>
+                    {pri.label}
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+                  <Clock className="h-3.5 w-3.5" />
+                  {date}
+                </span>
+              </div>
             </div>
+            {cat && (
+              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${cat.gradient} shadow-sm`}>
+                <cat.icon className="h-6 w-6 text-white" />
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Descripción</h2>
-          <p className="mt-2 whitespace-pre-wrap text-gray-700">{ticket.description}</p>
+        {/* Description */}
+        <div className="border-b border-border p-6">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Descripción</h2>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{ticket.description}</p>
         </div>
 
-        {ticket.category && (
-          <div className="border-t border-gray-200 p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Categoría</h2>
-            <p className="mt-1 text-gray-700">{categoryLabels[ticket.category] || ticket.category}</p>
-          </div>
-        )}
-
+        {/* Tags */}
         {ticket.tags && ticket.tags.length > 0 && (
-          <div className="border-t border-gray-200 p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Tags</h2>
-            <div className="mt-2 flex flex-wrap gap-2">
+          <div className="border-b border-border p-6">
+            <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              <Tag className="h-3.5 w-3.5" />
+              Tags
+            </h2>
+            <div className="flex flex-wrap gap-2">
               {ticket.tags.map((tag: string) => (
-                <span key={tag} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                <span
+                  key={tag}
+                  className="rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 px-3 py-1 text-xs font-medium text-indigo-600"
+                >
                   {tag}
                 </span>
               ))}
@@ -97,30 +121,41 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
           </div>
         )}
 
+        {/* AI Context */}
         {ticket.ai_context && (
-          <div className="border-t border-gray-200 p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Análisis IA</h2>
-            <div className="mt-3 space-y-3">
-              <div className="rounded-lg bg-purple-50 p-4">
-                <p className="text-sm font-medium text-purple-800">
-                  Reincidente: {ticket.ai_context.is_recurring_issue ? 'Sí' : 'No'}
-                </p>
-                <p className="mt-1 text-sm text-purple-700">
-                  Sentimiento: {ticket.ai_context.customer_sentiment?.replace(/_/g, ' ')}
-                </p>
-                <p className="mt-2 text-sm text-purple-600">{ticket.ai_context.historical_summary}</p>
+          <div className="border-b border-border p-6">
+            <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              <BrainCircuit className="h-3.5 w-3.5" />
+              Análisis IA
+            </h2>
+            <div className="rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-indigo-600 shadow-xs">
+                  <span className={`h-1.5 w-1.5 rounded-full ${ticket.ai_context.is_recurring_issue ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                  {ticket.ai_context.is_recurring_issue ? 'Reincidente' : 'No reincidente'}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-indigo-600 shadow-xs">
+                  {ticket.ai_context.customer_sentiment?.replace(/_/g, ' ')}
+                </span>
               </div>
+              <p className="mt-3 text-sm leading-relaxed text-indigo-900/70">
+                {ticket.ai_context.historical_summary}
+              </p>
             </div>
           </div>
         )}
 
+        {/* Suggested Response */}
         {ticket.ai_suggested_response && (
-          <div className="border-t border-gray-200 p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Respuesta Sugerida</h2>
-            <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <div className="prose prose-sm max-w-none text-blue-900">
+          <div className="p-6">
+            <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              <MessageSquareText className="h-3.5 w-3.5" />
+              Respuesta sugerida
+            </h2>
+            <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-sky-50 p-4">
+              <div className="prose prose-sm max-w-none text-blue-900/80">
                 {ticket.ai_suggested_response.split('\n').map((line: string, i: number) => (
-                  <p key={i}>{line}</p>
+                  <p key={i} className="text-sm leading-relaxed">{line}</p>
                 ))}
               </div>
             </div>
