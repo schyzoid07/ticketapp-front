@@ -38,6 +38,7 @@ Cliente → [slug].vercel.app (formulario público)
 ### Requisitos
 
 - Node.js 20+
+- **pnpm** (reemplaza a npm, evitar vulnerabilidades)
 - Una cuenta en [Supabase](https://supabase.com) con proyecto creado
 - El backend de agentes IA corriendo (opcional para UI sola)
 
@@ -48,6 +49,8 @@ git clone https://github.com/schyzoid07/ticketapp-front.git
 cd ticketapp-front
 pnpm install
 ```
+
+> **Nota**: Este proyecto usa **pnpm** en lugar de npm por seguridad (vulnerabilidades conocidas en npm). Si clonas el repo, asegúrate de tener pnpm instalado (`npm install -g pnpm`).
 
 Crea un archivo `.env.local` basado en `.env.example`:
 
