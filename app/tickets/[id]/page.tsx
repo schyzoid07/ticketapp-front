@@ -9,9 +9,9 @@ import {
   HelpCircle,
   Tag,
   BrainCircuit,
-  MessageSquareText,
   Clock,
 } from 'lucide-react';
+import { TicketReply } from '@/components/ticket-reply';
 
 const categoryMeta: Record<string, { icon: typeof Bug; label: string; gradient: string }> = {
   SOFTWARE_BUG: { icon: Bug, label: 'Bug de Software', gradient: 'from-red-500 to-rose-600' },
@@ -22,6 +22,7 @@ const categoryMeta: Record<string, { icon: typeof Bug; label: string; gradient: 
 };
 
 const priorityMeta: Record<number, { label: string; color: string }> = {
+  0: { label: 'Fuera de scope', color: 'bg-gray-100 text-gray-500' },
   1: { label: 'Baja', color: 'bg-gray-100 text-gray-600' },
   2: { label: 'Media', color: 'bg-blue-50 text-blue-600' },
   3: { label: 'Alta', color: 'bg-amber-50 text-amber-600' },
@@ -37,7 +38,7 @@ const statusMeta: Record<string, { label: string; color: string }> = {
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { ticket, error } = await getTicket(id);
+  const { ticket, replies, error } = await getTicket(id);
 
   if (error || !ticket) {
     notFound();
@@ -54,6 +55,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   const cat = ticket.category ? categoryMeta[ticket.category] : null;
   const pri = priorityMeta[ticket.priority ?? 0];
   const st = statusMeta[ticket.status] ?? { label: ticket.status, color: 'bg-gray-100 text-gray-500' };
+  const isResolved = ticket.status === 'RESOLVED' || ticket.status === 'CLOSED';
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12">
@@ -76,7 +78,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
                   <span className="h-1.5 w-1.5 rounded-full bg-current" />
                   {st.label}
                 </span>
-                {ticket.priority && (
+                {ticket.priority !== null && (
                   <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-xs font-medium ${pri.color}`}>
                     {pri.label}
                   </span>
@@ -145,20 +147,53 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
           </div>
         )}
 
-        {/* Suggested Response */}
-        {ticket.ai_suggested_response && (
+        {/* Reply Section */}
+        {!isResolved && (
           <div className="p-6">
-            <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
-              <MessageSquareText className="h-3.5 w-3.5" />
-              Respuesta sugerida
+            <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              Responder ticket
             </h2>
-            <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-sky-50 p-4">
-              <div className="prose prose-sm max-w-none text-blue-900/80">
-                {ticket.ai_suggested_response.split('\n').map((line: string, i: number) => (
-                  <p key={i} className="text-sm leading-relaxed">{line}</p>
+            <TicketReply
+              ticketId={ticket.id}
+              userId={process.env.NEXT_PUBLIC_DEFAULT_USER_ID || '00000000-0000-0000-0000-000000000000'}
+              aiSuggestion={ticket.ai_suggested_response}
+              replies={replies || []}
+            />
+          </div>
+        )}
+
+        {/* Resolution */}
+        {isResolved && ticket.resolution && (
+          <div className="border-t border-border p-6">
+            <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              Resolución
+            </h2>
+            <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-green-50 p-4">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-emerald-900/70">
+                {ticket.resolution}
+              </p>
+            </div>
+
+            {replies && replies.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400">Conversación</h3>
+                {replies.map((reply: any) => (
+                  <div key={reply.id} className={`flex gap-3 ${reply.author_type === 'agent' ? 'justify-end' : ''}`}>
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                        reply.author_type === 'agent'
+                          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                          : 'border border-border bg-surface'
+                      }`}
+                    >
+                      <p className={`text-sm leading-relaxed whitespace-pre-wrap ${reply.author_type === 'agent' ? 'text-white/90' : 'text-gray-600'}`}>
+                        {reply.body}
+                      </p>
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

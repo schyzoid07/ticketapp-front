@@ -95,10 +95,65 @@ export async function getTicket(id: string) {
       return { error: error.message };
     }
 
-    return { ticket: data };
+    const { data: replies, error: repliesError } = await client
+      .from('ticket_replies')
+      .select('*')
+      .eq('ticket_id', id)
+      .order('created_at', { ascending: true });
+
+    return { ticket: data, replies: replies || [] };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
     console.error('Error al obtener ticket:', message);
     return { error: message };
+  }
+}
+
+interface ReplyState {
+  error: string;
+  success: boolean;
+}
+
+export async function sendReply(prevState: ReplyState, formData: FormData) {
+  const ticketId = formData.get('ticket_id') as string;
+  const body = formData.get('body') as string;
+  const userId = formData.get('user_id') as string;
+  const status = formData.get('status') as string;
+
+  if (!ticketId || !body) {
+    return { error: 'Faltan datos requeridos', success: false };
+  }
+
+  try {
+    const client = getClient();
+
+    const { error: replyError } = await client
+      .from('ticket_replies')
+      .insert({
+        ticket_id: ticketId,
+        user_id: userId || null,
+        author_type: 'agent',
+        body,
+      });
+
+    if (replyError) {
+      return { error: replyError.message, success: false };
+    }
+
+    if (status === 'RESOLVED') {
+      await client
+        .from('tickets')
+        .update({
+          status: 'RESOLVED',
+          resolution: body,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', ticketId);
+    }
+
+    return { success: true, error: '' };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error desconocido';
+    return { error: message, success: false };
   }
 }
