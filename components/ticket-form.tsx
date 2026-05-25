@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { motion } from 'framer-motion';
 import { Loader2, Send, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { createTicket } from '@/app/actions/tickets';
 
@@ -20,11 +21,20 @@ export function TicketForm({ companyId, userId, userName }: { companyId: string;
 
   if (state.ticket) {
     return (
-      <div className="flex flex-col items-center py-8 text-center">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-100">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col items-center py-8 text-center"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+          className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-500/20"
+        >
           <CheckCircle2 className="h-8 w-8 text-white" />
-        </div>
-        <p className="text-lg font-semibold text-gray-900">Ticket recibido</p>
+        </motion.div>
+        <p className="text-lg font-semibold text-foreground">Ticket recibido</p>
         <p className="mt-1 text-xs text-gray-400 tabular-nums">ID {state.ticket.id.slice(0, 8)}...</p>
         <a
           href={`/tickets/${state.ticket.id}`}
@@ -33,7 +43,7 @@ export function TicketForm({ companyId, userId, userName }: { companyId: string;
           Ver ticket
           <ArrowRight className="h-4 w-4" />
         </a>
-      </div>
+      </motion.div>
     );
   }
 
@@ -44,7 +54,7 @@ export function TicketForm({ companyId, userId, userName }: { companyId: string;
       <input type="hidden" name="user_name" value={userName} />
 
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="title" className="block text-sm font-medium text-foreground/70">
           Título
         </label>
         <input
@@ -58,7 +68,7 @@ export function TicketForm({ companyId, userId, userName }: { companyId: string;
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="description" className="block text-sm font-medium text-foreground/70">
           Descripción
         </label>
         <textarea
@@ -72,10 +82,14 @@ export function TicketForm({ companyId, userId, userName }: { companyId: string;
       </div>
 
       {state.error && (
-        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3">
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50/80 p-3"
+        >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
           <p className="text-sm text-red-600">{state.error}</p>
-        </div>
+        </motion.div>
       )}
 
       <button

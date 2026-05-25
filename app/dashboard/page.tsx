@@ -14,7 +14,7 @@ export default async function DashboardPage() {
             <LayoutDashboard className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-lg font-bold text-foreground">Dashboard</h1>
             <p className="text-xs text-gray-500">{tickets.length} tickets</p>
           </div>
         </div>

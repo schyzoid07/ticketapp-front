@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Inbox } from 'lucide-react';
 import { TicketCard } from './ticket-card';
 
@@ -61,7 +62,7 @@ export function TicketList({ initialTickets, companyId }: { initialTickets: Tick
 
   if (tickets.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-white/50 px-4 py-20">
+      <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-surface/50 px-4 py-20">
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200">
           <Inbox className="h-6 w-6 text-gray-400" />
         </div>
@@ -79,9 +80,19 @@ export function TicketList({ initialTickets, companyId }: { initialTickets: Tick
 
   return (
     <div className="space-y-3">
-      {tickets.map((ticket) => (
-        <TicketCard key={ticket.id} ticket={ticket} />
-      ))}
+      <AnimatePresence initial={false}>
+        {tickets.map((ticket, i) => (
+          <motion.div
+            key={ticket.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ delay: i * 0.03, duration: 0.25 }}
+          >
+            <TicketCard ticket={ticket} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

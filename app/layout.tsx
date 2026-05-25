@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TicketCheck, LayoutDashboard, Plus } from "lucide-react";
+import { AnimatedBackground } from "@/components/animated-background";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,7 +30,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <header className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl">
+        <AnimatedBackground />
+        <header className="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-xl">
           <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
             <a href="/" className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-sm">
@@ -40,7 +42,7 @@ export default function RootLayout({
             <div className="flex items-center gap-2">
               <a
                 href="/dashboard"
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-muted hover:text-gray-800"
               >
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard

@@ -54,7 +54,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
   return (
     <a
       href={`/tickets/${ticket.id}`}
-      className="group relative block overflow-hidden rounded-2xl border border-border bg-white p-5 shadow-xs transition-all hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-100/50"
+      className="group relative block overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-xs transition-all hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-500/10"
     >
       <div className="flex items-start gap-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 text-indigo-600 transition-colors group-hover:from-indigo-100 group-hover:to-purple-100">
@@ -62,7 +62,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-sm font-semibold text-gray-900">{ticket.title}</h3>
+            <h3 className="truncate text-sm font-semibold text-foreground">{ticket.title}</h3>
             <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-indigo-500" />
           </div>
           <p className="mt-1 line-clamp-2 text-sm text-gray-500">{ticket.description}</p>

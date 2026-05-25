@@ -65,12 +65,12 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
         Volver
       </a>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
         {/* Header */}
-        <div className="border-b border-border bg-gradient-to-br from-gray-50 to-white p-6">
+        <div className="border-b border-border bg-gradient-to-br from-muted to-surface p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl font-bold text-gray-900">{ticket.title}</h1>
+              <h1 className="text-xl font-bold text-foreground">{ticket.title}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-xs font-medium ${st.color}`}>
                   <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -130,11 +130,11 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             </h2>
             <div className="rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-indigo-600 shadow-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-medium text-indigo-600 shadow-xs">
                   <span className={`h-1.5 w-1.5 rounded-full ${ticket.ai_context.is_recurring_issue ? 'bg-amber-500' : 'bg-emerald-500'}`} />
                   {ticket.ai_context.is_recurring_issue ? 'Reincidente' : 'No reincidente'}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-indigo-600 shadow-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-medium text-indigo-600 shadow-xs">
                   {ticket.ai_context.customer_sentiment?.replace(/_/g, ' ')}
                 </span>
               </div>
