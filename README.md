@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TicketSupport — Frontend Multi-Agente
 
-## Getting Started
+Interfaz de usuario para el sistema de soporte técnico con IA. Permite a clientes crear tickets desde landing pages públicas por empresa, y a agentes humanos gestionarlos con asistencia de IA.
 
-First, run the development server:
+## Stack
+
+- **Framework**: Next.js 16.2 (App Router)
+- **Estilos**: Tailwind CSS v4 con animaciones Framer Motion
+- **Iconos**: Lucide React
+- **Backend de datos**: Supabase (Auth + Database + Realtime)
+- **Autenticación**: Supabase SSR con `@supabase/ssr`
+
+## Flujo de Datos
+
+```
+Cliente → [slug].vercel.app (formulario público)
+  → Server Action (createTicket)
+  → Supabase INSERT (estado: PENDING_TRIAGE)
+  → (Webhook externo procesa con IA — opcional)
+  → Realtime actualiza dashboard del agente
+  → Agente ve análisis IA, edita borrador y responde
+  → Ticket marcado como RESOLVED
+```
+
+## Páginas
+
+| Ruta | Descripción | Acceso |
+|------|-------------|--------|
+| `/` | Crear ticket (demo) | Público |
+| `/[slug]` | Landing público por empresa | Público |
+| `/login` | Inicio de sesión de agentes | Público |
+| `/signup` | Registro de nueva empresa | Público |
+| `/dashboard` | Lista de tickets con filtros | Agentes autenticados |
+| `/tickets/[id]` | Detalle del ticket + responder | Agentes autenticados |
+
+## Setup Local
+
+### Requisitos
+
+- Node.js 20+
+- Una cuenta en [Supabase](https://supabase.com) con proyecto creado
+- El backend de agentes IA corriendo (opcional para UI sola)
+
+### Pasos
+
+```bash
+git clone https://github.com/schyzoid07/ticketapp-front.git
+cd ticketapp-front
+npm install
+```
+
+Crea un archivo `.env.local` basado en `.env.example`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=tu_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
+NEXT_PUBLIC_DEFAULT_COMPANY_ID=uuid_de_tu_company_demo
+NEXT_PUBLIC_DEFAULT_USER_ID=uuid_de_tu_usuario_demo
+NEXT_PUBLIC_DEFAULT_USER_NAME=Nombre Demo
+```
+
+Ejecuta las migraciones SQL del backend (`00001_initial_schema.sql`, `00002_add_replies.sql`, `00003_multi_tenant_setup.sql`) contra tu proyecto Supabase desde el SQL Editor del dashboard.
+
+Inicia el servidor:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Funcionalidades
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Formulario público por empresa**: Cada empresa tiene una URL única (`/mi-empresa`) donde sus clientes crean tickets.
+- **Registro de empresas**: Cualquiera puede registrar su empresa y crear una cuenta admin.
+- **Dashboard con filtros**: Filtra tickets por prioridad (1-4), estado (PENDING_TRIAGE, OPEN, RESOLVED, CLOSED) y rango de fechas via URL params.
+- **Análisis IA**: Cada ticket muestra contexto generado por IA (reincidencia, sentimiento del cliente, resumen histórico).
+- **Respuesta sugerida**: La IA genera un borrador que el agente puede editar antes de enviar.
+- **Override de prioridad**: El agente puede cambiar la prioridad asignada por la IA.
+- **Actualizaciones en vivo**: El dashboard se actualiza automáticamente via WebSockets (Supabase Realtime).
+- **Scope safety**: Tickets fuera del ámbito de soporte técnico se cierran automáticamente.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Limitaciones Free Tier
 
-## Learn More
+- **Supabase Auth**: Hasta 50,000 usuarios activos mensuales.
+- **Supabase Realtime**: 200 conexiones concurrentes, 2 millones de mensajes/mes.
+- **Supabase Database**: 500 MB de almacenamiento, 2 GB de ancho de banda.
+- **Backend IA**: El pipeline de agentes corre en un backend separado con sus propias limitaciones (Gemini 5 req/min).
+- **Sin email transactional**: No se envían notificaciones por correo (requiere Resend/SendGrid configurado).
+- **Sin Database Webhook automático**: El pipeline IA se dispara manualmente vía endpoint test hasta tener URL pública.
 
-To learn more about Next.js, take a look at the following resources:
+## Pruebas Realizadas
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Creación de tickets desde formulario web
+- Dashboard con filtros por prioridad, estado y rango de fechas
+- Autenticación (login/logout) con Supabase SSR
+- Vista detalle con contexto IA y sugerencia de respuesta
+- Envío de respuestas y resolución de tickets
+- Landing público por slug de empresa
+- Registro de nueva empresa + admin inicial
+- Override manual de prioridad
+- Aislamiento multi-tenant via RLS Policies
