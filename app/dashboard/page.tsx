@@ -1,14 +1,25 @@
-import { LayoutDashboard, Plus } from "lucide-react";
-import { TicketList } from "@/components/ticket-list";
-import { getTickets } from "@/app/actions/tickets";
+import { Suspense } from 'react';
+import { LayoutDashboard, Plus } from 'lucide-react';
+import { TicketList } from '@/components/ticket-list';
+import { TicketFilters } from '@/components/ticket-filters';
+import { getTickets } from '@/app/actions/tickets';
 
-export default async function DashboardPage() {
+export default async function DashboardPage(props: { searchParams?: Promise<Record<string, string>> }) {
+  const searchParams = await props.searchParams;
   const companyId = process.env.NEXT_PUBLIC_DEFAULT_COMPANY_ID || '00000000-0000-0000-0000-000000000000';
-  const { tickets } = await getTickets(companyId);
+
+  const filters = {
+    priority: searchParams?.priority,
+    status: searchParams?.status,
+    from: searchParams?.from,
+    to: searchParams?.to,
+  };
+
+  const { tickets } = await getTickets(companyId, filters);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12">
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-sm">
             <LayoutDashboard className="h-5 w-5 text-white" />
@@ -25,6 +36,12 @@ export default async function DashboardPage() {
           <Plus className="h-4 w-4" />
           Nuevo
         </a>
+      </div>
+
+      <div className="mb-6">
+        <Suspense fallback={null}>
+          <TicketFilters />
+        </Suspense>
       </div>
 
       <TicketList initialTickets={tickets} companyId={companyId} />

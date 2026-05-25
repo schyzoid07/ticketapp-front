@@ -12,6 +12,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { TicketReply } from '@/components/ticket-reply';
+import { PrioritySelector } from '@/components/priority-selector';
 
 const categoryMeta: Record<string, { icon: typeof Bug; label: string; gradient: string }> = {
   SOFTWARE_BUG: { icon: Bug, label: 'Bug de Software', gradient: 'from-red-500 to-rose-600' },
@@ -89,11 +90,16 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
                 </span>
               </div>
             </div>
-            {cat && (
-              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${cat.gradient} shadow-sm`}>
-                <cat.icon className="h-6 w-6 text-white" />
-              </div>
-            )}
+            <div className="flex flex-col items-end gap-3">
+              {!isResolved && (
+                <PrioritySelector ticketId={ticket.id} currentPriority={ticket.priority} />
+              )}
+              {cat && (
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${cat.gradient} shadow-sm`}>
+                  <cat.icon className="h-6 w-6 text-white" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TicketCheck, LayoutDashboard, Plus } from "lucide-react";
 import { AnimatedBackground } from "@/components/animated-background";
+import { AuthStatus } from "@/components/auth-status";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -54,6 +55,7 @@ export default function RootLayout({
                 <Plus className="h-4 w-4" />
                 Nuevo ticket
               </a>
+              <AuthStatus />
             </div>
           </nav>
         </header>
