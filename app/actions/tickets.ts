@@ -15,6 +15,13 @@ interface RateEntry {
 
 const rateStore = new Map<string, RateEntry>();
 
+async function getClientIp(): Promise<string> {
+  const h = await headers();
+  return h.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || h.get('x-real-ip')
+    || 'unknown';
+}
+
 function checkRateLimit(key: string): { allowed: boolean; remaining: number; resetMinutes: number } {
   const now = Date.now();
   const entry = rateStore.get(key);
@@ -66,7 +73,8 @@ export async function createTicket(prevState: { error: string; ticket: TicketDat
     return { error: 'Título y descripción son requeridos', ticket: null };
   }
 
-  const rateKey = email || (await headers()).get('x-forwarded-for') || 'anonymous';
+  const clientIp = await getClientIp();
+  const rateKey = userId || clientIp;
   const rateCheck = checkRateLimit(rateKey);
   if (!rateCheck.allowed) {
     return {
