@@ -1,8 +1,37 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createServerSupabase } from '@/lib/supabase-server';
 import type { TicketData, ReplyState } from '@/lib/types';
+
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+
+interface RateEntry {
+  count: number;
+  resetAt: number;
+}
+
+const rateStore = new Map<string, RateEntry>();
+
+function checkRateLimit(key: string): { allowed: boolean; remaining: number; resetMinutes: number } {
+  const now = Date.now();
+  const entry = rateStore.get(key);
+
+  if (!entry || now > entry.resetAt) {
+    rateStore.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, remaining: RATE_LIMIT_MAX - 1, resetMinutes: 15 };
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) {
+    const resetMinutes = Math.ceil((entry.resetAt - now) / 60000);
+    return { allowed: false, remaining: 0, resetMinutes };
+  }
+
+  entry.count++;
+  return { allowed: true, remaining: RATE_LIMIT_MAX - entry.count, resetMinutes: Math.ceil((entry.resetAt - now) / 60000) };
+}
 
 async function requireUser() {
   const supabase = await createServerSupabase();
@@ -25,7 +54,7 @@ function getClient() {
   return supabaseAdmin;
 }
 
-export async function createTicket(prevState: { error: string; ticket: TicketData | null }, formData: FormData) {
+export async function createTicket(prevState: { error: string; ticket: TicketData | null; rateLimit?: { remaining: number; resetMinutes: number } }, formData: FormData) {
   const title = formData.get('title') as string;
   const description = formData.get('description') as string;
   const companyId = formData.get('company_id') as string;
@@ -35,6 +64,16 @@ export async function createTicket(prevState: { error: string; ticket: TicketDat
 
   if (!title || !description) {
     return { error: 'Título y descripción son requeridos', ticket: null };
+  }
+
+  const rateKey = email || (await headers()).get('x-forwarded-for') || 'anonymous';
+  const rateCheck = checkRateLimit(rateKey);
+  if (!rateCheck.allowed) {
+    return {
+      error: `Límite de tickets alcanzado. Intenta de nuevo en ${rateCheck.resetMinutes} minutos.`,
+      ticket: null,
+      rateLimit: { remaining: 0, resetMinutes: rateCheck.resetMinutes },
+    };
   }
 
   try {
@@ -59,7 +98,7 @@ export async function createTicket(prevState: { error: string; ticket: TicketDat
       return { error: error.message, ticket: null };
     }
 
-    return { ticket: data as unknown as TicketData, error: '' };
+    return { ticket: data as unknown as TicketData, error: '', rateLimit: { remaining: rateCheck.remaining, resetMinutes: rateCheck.resetMinutes } };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
     console.error('Error al crear ticket:', message);

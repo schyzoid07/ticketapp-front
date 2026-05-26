@@ -35,7 +35,7 @@ export interface TicketData {
   created_at: string;
 }
 
-export type TicketFormState = { error: string; ticket: TicketData | null };
+export type TicketFormState = { error: string; ticket: TicketData | null; rateLimit?: { remaining: number; resetMinutes: number } };
 
 export interface Reply {
   id: string;

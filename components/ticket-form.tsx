@@ -72,7 +72,22 @@ export function TicketForm({ companyId, userId, userName }: { companyId: string;
         />
       </div>
 
-      {state.error && (
+      {state.rateLimit && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-100 p-4"
+        >
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+          <div>
+            <p className="text-sm font-semibold text-red-700">Límite de solicitudes alcanzado</p>
+            <p className="mt-0.5 text-sm text-red-600">{state.error}</p>
+            <p className="mt-1 text-xs text-red-500">Has enviado demasiados tickets. Espera {state.rateLimit.resetMinutes} minutos antes de intentar de nuevo.</p>
+          </div>
+        </motion.div>
+      )}
+
+      {state.error && !state.rateLimit && (
         <motion.div
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
