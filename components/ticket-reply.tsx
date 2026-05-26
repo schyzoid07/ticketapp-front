@@ -2,26 +2,20 @@
 
 import { useActionState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Loader2, CheckCircle2, MessageSquareText, Bot, User } from 'lucide-react';
+import { Send, Loader2, CheckCircle2, MessageSquareText, Bot, User, Shield, Wrench } from 'lucide-react';
+import type { Reply } from '@/lib/types';
 import { sendReply } from '@/app/actions/tickets';
-
-interface Reply {
-  id: string;
-  ticket_id: string;
-  user_id: string | null;
-  author_type: string;
-  body: string;
-  created_at: string;
-}
 
 export function TicketReply({
   ticketId,
   userId,
+  agentName,
   aiSuggestion,
   replies,
 }: {
   ticketId: string;
   userId: string;
+  agentName: string;
   aiSuggestion: string | null;
   replies: Reply[];
 }) {
@@ -29,23 +23,6 @@ export function TicketReply({
 
   return (
     <div className="space-y-6">
-      {/* AI Suggested Response */}
-      {aiSuggestion && (
-        <div>
-          <h3 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
-            <Bot className="h-3.5 w-3.5" />
-            Respuesta sugerida por IA
-          </h3>
-          <div className="rounded-xl border border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
-            <div className="prose prose-sm max-w-none text-indigo-900/70">
-              {aiSuggestion.split('\n').map((line: string, i: number) => (
-                <p key={i} className="text-sm leading-relaxed">{line}</p>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Replies */}
       {replies.length > 0 && (
         <div>
@@ -68,12 +45,14 @@ export function TicketReply({
                 >
                   <div className="flex items-center gap-1.5 mb-1">
                     {reply.author_type === 'agent' ? (
-                      <User className="h-3 w-3 opacity-70" />
+                      <Shield className="h-3 w-3 opacity-70" />
                     ) : (
                       <User className="h-3 w-3 text-gray-400" />
                     )}
                     <span className={`text-xs font-medium ${reply.author_type === 'agent' ? 'text-white/80' : 'text-gray-500'}`}>
-                      {reply.author_type === 'agent' ? 'Agente' : 'Cliente'}
+                      {reply.author_type === 'agent'
+                        ? (reply.author_name || 'Agente')
+                        : 'Cliente'}
                     </span>
                   </div>
                   <p className={`text-sm leading-relaxed whitespace-pre-wrap ${reply.author_type === 'agent' ? 'text-white/90' : 'text-gray-600'}`}>
@@ -97,12 +76,13 @@ export function TicketReply({
             <CheckCircle2 className="h-6 w-6 text-white" />
           </div>
           <p className="text-sm font-semibold text-foreground">Respuesta enviada</p>
-          <p className="mt-1 text-xs text-gray-400">El ticket ha sido marcado como resuelto</p>
+          <p className="mt-1 text-xs text-gray-400">El ticket ha sido marcado como resuelto automáticamente</p>
         </motion.div>
       ) : (
         <form action={formAction} className="space-y-3">
           <input type="hidden" name="ticket_id" value={ticketId} />
           <input type="hidden" name="user_id" value={userId} />
+          <input type="hidden" name="author_name" value={agentName} />
 
           <div>
             <label htmlFor="body" className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
@@ -124,28 +104,20 @@ export function TicketReply({
             <p className="text-sm text-red-500">{state.error}</p>
           )}
 
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              name="status"
-              value="OPEN"
-              disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-muted disabled:opacity-50"
-            >
-              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Guardar borrador
-            </button>
-            <button
-              type="submit"
-              name="status"
-              value="RESOLVED"
-              disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-emerald-500 hover:to-emerald-400 hover:shadow-md disabled:opacity-50"
-            >
-              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              Enviar y resolver
-            </button>
-          </div>
+          <button
+            type="submit"
+            name="status"
+            value="RESOLVED"
+            disabled={pending}
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-emerald-500 hover:to-emerald-400 hover:shadow-md disabled:opacity-50"
+          >
+            {pending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            Enviar respuesta y resolver ticket
+          </button>
         </form>
       )}
     </div>

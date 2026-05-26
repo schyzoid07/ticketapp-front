@@ -1,5 +1,6 @@
 import { getTicket } from '@/app/actions/tickets';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import type { TicketFull, Reply } from '@/lib/types';
 import {
   ArrowLeft,
   Bug,
@@ -10,9 +11,11 @@ import {
   Tag,
   BrainCircuit,
   Clock,
+  Shield,
 } from 'lucide-react';
 import { TicketReply } from '@/components/ticket-reply';
 import { PrioritySelector } from '@/components/priority-selector';
+import { createServerSupabase } from '@/lib/supabase-server';
 
 const categoryMeta: Record<string, { icon: typeof Bug; label: string; gradient: string }> = {
   SOFTWARE_BUG: { icon: Bug, label: 'Bug de Software', gradient: 'from-red-500 to-rose-600' },
@@ -39,6 +42,16 @@ const statusMeta: Record<string, { label: string; color: string }> = {
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  const supabase = await createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const currentUserId = user.id;
+  const currentRole = user.user_metadata?.role as string;
+  const canChangePriority = currentRole === 'owner' || currentRole === 'admin';
+  const agentName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Agente';
+
   const { ticket, replies, error } = await getTicket(id);
 
   if (error || !ticket) {
@@ -80,7 +93,8 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
                   {st.label}
                 </span>
                 {ticket.priority !== null && (
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-xs font-medium ${pri.color}`}>
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-xs font-medium text-red-600 bg-red-50">
+                    <Clock className="h-3 w-3" />
                     {pri.label}
                   </span>
                 )}
@@ -91,7 +105,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               </div>
             </div>
             <div className="flex flex-col items-end gap-3">
-              {!isResolved && (
+              {!isResolved && canChangePriority && (
                 <PrioritySelector ticketId={ticket.id} currentPriority={ticket.priority} />
               )}
               {cat && (
@@ -114,7 +128,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
           <div className="border-b border-border p-6">
             <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
               <Tag className="h-3.5 w-3.5" />
-              Tags
+              Tags <span className="font-normal normal-case tracking-normal text-gray-400">(generados por IA)</span>
             </h2>
             <div className="flex flex-wrap gap-2">
               {ticket.tags.map((tag: string) => (
@@ -153,6 +167,21 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
           </div>
         )}
 
+        {/* AI Suggested Response - scrollable, half width */}
+        {ticket.ai_suggested_response && !isResolved && (
+          <div className="border-b border-border p-6">
+            <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              <BrainCircuit className="h-3.5 w-3.5" />
+              Respuesta sugerida por IA
+            </h2>
+            <div className="max-h-48 overflow-y-auto rounded-xl border border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
+              <pre className="whitespace-pre-wrap text-sm leading-relaxed text-indigo-900/70 font-sans">
+                {ticket.ai_suggested_response}
+              </pre>
+            </div>
+          </div>
+        )}
+
         {/* Reply Section */}
         {!isResolved && (
           <div className="p-6">
@@ -161,7 +190,8 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             </h2>
             <TicketReply
               ticketId={ticket.id}
-              userId={process.env.NEXT_PUBLIC_DEFAULT_USER_ID || '00000000-0000-0000-0000-000000000000'}
+              userId={currentUserId}
+              agentName={agentName}
               aiSuggestion={ticket.ai_suggested_response}
               replies={replies || []}
             />
@@ -183,7 +213,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             {replies && replies.length > 0 && (
               <div className="mt-6 space-y-3">
                 <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400">Conversación</h3>
-                {replies.map((reply: any) => (
+                {replies.map((reply: Reply) => (
                   <div key={reply.id} className={`flex gap-3 ${reply.author_type === 'agent' ? 'justify-end' : ''}`}>
                     <div
                       className={`max-w-[80%] rounded-2xl px-4 py-3 ${

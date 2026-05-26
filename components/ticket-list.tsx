@@ -1,25 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox } from 'lucide-react';
+import { Inbox, ChevronDown, Loader2 } from 'lucide-react';
+import type { Ticket } from '@/lib/types';
 import { TicketCard } from './ticket-card';
 
-interface Ticket {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  category: string | null;
-  priority: number | null;
-  created_at: string;
-}
+const PAGE_SIZE = 10;
 
 export function TicketList({ initialTickets, companyId }: { initialTickets: Ticket[]; companyId: string }) {
-  const [tickets, setTickets] = useState(initialTickets);
+  const [tickets, setTickets] = useState<Ticket[]>(initialTickets.slice(0, PAGE_SIZE));
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  const totalPages = Math.ceil(initialTickets.length / PAGE_SIZE);
+  const hasMore = page < totalPages;
 
   useEffect(() => {
-    setTickets(initialTickets);
+    setTickets(initialTickets.slice(0, PAGE_SIZE));
+    setPage(1);
   }, [initialTickets]);
 
   useEffect(() => {
@@ -43,7 +42,10 @@ export function TicketList({ initialTickets, companyId }: { initialTickets: Tick
         },
         (payload: any) => {
           if (payload.eventType === 'INSERT') {
-            setTickets((prev) => [payload.new as Ticket, ...prev]);
+            setTickets((prev) => {
+              const next = [payload.new as Ticket, ...prev];
+              return next.slice(0, PAGE_SIZE * page);
+            });
           } else if (payload.eventType === 'UPDATE') {
             setTickets((prev) =>
               prev.map((t) => (t.id === payload.new.id ? (payload.new as Ticket) : t))
@@ -58,9 +60,18 @@ export function TicketList({ initialTickets, companyId }: { initialTickets: Tick
     return () => {
       client.removeChannel(channel);
     };
-  }, [companyId]);
+  }, [companyId, page]);
 
-  if (tickets.length === 0) {
+  const loadMore = useCallback(() => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+    const nextPage = page + 1;
+    setTickets(initialTickets.slice(0, PAGE_SIZE * nextPage));
+    setPage(nextPage);
+    setLoading(false);
+  }, [page, hasMore, loading, initialTickets]);
+
+  if (initialTickets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-surface/50 px-4 py-20">
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200">
@@ -68,12 +79,6 @@ export function TicketList({ initialTickets, companyId }: { initialTickets: Tick
         </div>
         <p className="text-sm font-medium text-gray-500">No hay tickets</p>
         <p className="mt-1 text-xs text-gray-400">Crea tu primer ticket para empezar</p>
-        <a
-          href="/"
-          className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-md"
-        >
-          Nuevo ticket
-        </a>
       </div>
     );
   }
@@ -93,6 +98,24 @@ export function TicketList({ initialTickets, companyId }: { initialTickets: Tick
           </motion.div>
         ))}
       </AnimatePresence>
+
+      <div className="flex items-center justify-between pt-2 text-xs text-gray-400">
+        <span>{tickets.length} de {initialTickets.length} tickets</span>
+        {hasMore && (
+          <button
+            onClick={loadMore}
+            disabled={loading}
+            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-gray-500 transition-colors hover:bg-muted hover:text-gray-700 disabled:opacity-50"
+          >
+            {loading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+            Cargar más
+          </button>
+        )}
+      </div>
     </div>
   );
 }

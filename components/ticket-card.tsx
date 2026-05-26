@@ -1,3 +1,4 @@
+import type { Ticket } from '@/lib/types';
 import {
   Bug,
   CreditCard,
@@ -15,6 +16,20 @@ const categoryIcons: Record<string, typeof Bug> = {
   GENERAL_INQUIRY: HelpCircle,
 };
 
+const statusColors: Record<string, string> = {
+  RESOLVED: 'text-emerald-600 bg-emerald-50',
+  CLOSED: 'text-gray-400 bg-gray-100',
+  PENDING_TRIAGE: 'text-purple-600 bg-purple-50',
+  OPEN: '',
+};
+
+const priorityIconColors: Record<number, string> = {
+  1: 'text-blue-600 bg-blue-50',
+  2: 'text-yellow-600 bg-yellow-50',
+  3: 'text-red-600 bg-red-50',
+  4: 'text-purple-600 bg-purple-50',
+};
+
 const priorityConfig: Record<number, { label: string; dot: string }> = {
   1: { label: 'Baja', dot: 'bg-gray-400' },
   2: { label: 'Media', dot: 'bg-blue-500' },
@@ -29,16 +44,6 @@ const statusConfig: Record<string, { label: string; dot: string }> = {
   CLOSED: { label: 'Cerrado', dot: 'bg-gray-400' },
 };
 
-interface Ticket {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  category: string | null;
-  priority: number | null;
-  created_at: string;
-}
-
 export function TicketCard({ ticket }: { ticket: Ticket }) {
   const date = new Date(ticket.created_at).toLocaleDateString('es-ES', {
     month: 'short',
@@ -50,6 +55,11 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
   const CategoryIcon = ticket.category ? categoryIcons[ticket.category] : HelpCircle;
   const pri = priorityConfig[ticket.priority ?? 0];
   const st = statusConfig[ticket.status] ?? { label: ticket.status, dot: 'bg-gray-400' };
+  const isResolved = ticket.status === 'RESOLVED' || ticket.status === 'CLOSED';
+
+  const iconColorClass = isResolved
+    ? 'text-emerald-600 bg-emerald-50'
+    : (ticket.priority ? priorityIconColors[ticket.priority] : 'text-indigo-600 bg-indigo-50');
 
   return (
     <a
@@ -57,7 +67,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
       className="group relative block overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-xs transition-all hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-500/10"
     >
       <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 text-indigo-600 transition-colors group-hover:from-indigo-100 group-hover:to-purple-100">
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${iconColorClass}`}>
           <CategoryIcon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -75,6 +85,13 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
               <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
               {st.label}
             </span>
+            {ticket.tags && ticket.tags.length > 0 && (
+              <span className="hidden sm:inline-flex items-center gap-1 text-xs text-gray-400">
+                {ticket.tags.slice(0, 2).map((t: string) => (
+                  <span key={t} className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px]">{t}</span>
+                ))}
+              </span>
+            )}
             <span className="ml-auto text-xs text-gray-400">{date}</span>
           </div>
         </div>

@@ -1,12 +1,20 @@
 import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 import { LayoutDashboard, Plus } from 'lucide-react';
 import { TicketList } from '@/components/ticket-list';
 import { TicketFilters } from '@/components/ticket-filters';
-import { getTickets } from '@/app/actions/tickets';
+import { getTickets, getCompanyById } from '@/app/actions/tickets';
+import { createServerSupabase } from '@/lib/supabase-server';
 
 export default async function DashboardPage(props: { searchParams?: Promise<Record<string, string>> }) {
   const searchParams = await props.searchParams;
-  const companyId = process.env.NEXT_PUBLIC_DEFAULT_COMPANY_ID || '00000000-0000-0000-0000-000000000000';
+
+  const supabase = await createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) redirect('/login');
+
+  const companyId = user.user_metadata?.company_id as string;
 
   const filters = {
     priority: searchParams?.priority,
@@ -16,6 +24,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<Reco
   };
 
   const { tickets } = await getTickets(companyId, filters);
+  const { company } = await getCompanyById(companyId);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12">
@@ -26,11 +35,11 @@ export default async function DashboardPage(props: { searchParams?: Promise<Reco
           </div>
           <div>
             <h1 className="text-lg font-bold text-foreground">Dashboard</h1>
-            <p className="text-xs text-gray-500">{tickets.length} tickets</p>
+            <p className="text-xs text-gray-500">{tickets.length} tickets {company ? `· ${company.name}` : ''}</p>
           </div>
         </div>
         <a
-          href="/"
+          href={company?.slug ? `/${company.slug}` : '/'}
           className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-md"
         >
           <Plus className="h-4 w-4" />

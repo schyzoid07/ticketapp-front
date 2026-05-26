@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { TicketCheck, LayoutDashboard, Plus } from "lucide-react";
+import { TicketCheck } from "lucide-react";
 import { AnimatedBackground } from "@/components/animated-background";
 import { AuthStatus } from "@/components/auth-status";
+import { NuevoTicketButton } from "@/components/nuevo-ticket-button";
+import { HeaderNav } from "@/components/header-nav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,20 +43,8 @@ export default function RootLayout({
               TicketSupport
             </a>
             <div className="flex items-center gap-2">
-              <a
-                href="/dashboard"
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-muted hover:text-gray-800"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
-              </a>
-              <a
-                href="/"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-md"
-              >
-                <Plus className="h-4 w-4" />
-                Nuevo ticket
-              </a>
+              <HeaderNav />
+              <NuevoTicketButton />
               <AuthStatus />
             </div>
           </nav>

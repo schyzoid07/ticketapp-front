@@ -3,17 +3,8 @@
 import { useActionState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Send, ArrowRight, AlertCircle, CheckCircle2, Mail, User } from 'lucide-react';
+import type { TicketFormState } from '@/lib/types';
 import { createTicket } from '@/app/actions/tickets';
-
-interface TicketData {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  created_at: string;
-}
-
-type TicketFormState = { error: string; ticket: TicketData | null };
 const initialState: TicketFormState = { error: '', ticket: null };
 
 export function PublicTicketForm({ companyId, companyName }: { companyId: string; companyName: string }) {

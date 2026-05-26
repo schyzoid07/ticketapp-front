@@ -3,14 +3,23 @@
 import { useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Building2, Mail, Lock, User, Globe, Loader2, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Building2, Mail, Lock, User, Globe, Loader2, AlertCircle, CheckCircle2, ArrowRight, Link as LinkIcon, Copy } from 'lucide-react';
 import { registerCompany } from '@/app/actions/tickets';
+import { useState } from 'react';
 
 export default function SignupPage() {
   const [state, formAction, pending] = useActionState(registerCompany, { error: '', success: false });
   const router = useRouter();
+  const [copied, setCopied] = useState(false);
 
   if (state.success) {
+    const ticketLink = `${window.location.origin}/${state.slug}`;
+    const handleCopy = () => {
+      navigator.clipboard.writeText(ticketLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
       <div className="mx-auto flex w-full max-w-sm flex-col px-4 py-24">
         <motion.div
@@ -21,8 +30,26 @@ export default function SignupPage() {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-500/20">
             <CheckCircle2 className="h-8 w-8 text-white" />
           </div>
-          <p className="text-lg font-semibold text-foreground">Empresa registrada</p>
+          <p className="text-lg font-semibold text-foreground">{state.companyName} creada</p>
           <p className="mt-1 text-sm text-gray-500">Revisa tu correo para confirmar la cuenta</p>
+
+          <div className="mt-6 w-full rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 text-left">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-indigo-600">Tu enlace de tickets</p>
+            <div className="flex items-center gap-2">
+              <LinkIcon className="h-4 w-4 shrink-0 text-indigo-400" />
+              <code className="min-w-0 truncate text-sm text-indigo-700">{ticketLink}</code>
+              <button
+                onClick={handleCopy}
+                className="ml-auto shrink-0 rounded-lg bg-white/60 px-2.5 py-1 text-xs font-medium text-indigo-600 transition-colors hover:bg-white"
+              >
+                {copied ? 'Copiado' : <Copy className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-indigo-500/70">
+              Comparte este enlace con tus clientes para que puedan reportar tickets
+            </p>
+          </div>
+
           <button
             onClick={() => router.push('/login')}
             className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-md"
@@ -65,7 +92,7 @@ export default function SignupPage() {
 
         <div>
           <label htmlFor="slug" className="block text-sm font-medium text-foreground/70">
-            Slug (URL pública)
+            Dirección web
           </label>
           <div className="relative mt-1.5">
             <Globe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -79,7 +106,11 @@ export default function SignupPage() {
               placeholder="mi-empresa"
             />
           </div>
-          <p className="mt-1 text-xs text-gray-400">ticketapp.vercel.app/<span className="font-mono">mi-empresa</span></p>
+          <p className="mt-1 text-xs text-gray-400">
+            Tus clientes irán a: ticketapp.vercel.app/<span className="font-mono">mi-empresa</span>
+            <br />
+            <span className="text-gray-400">Usa solo letras minúsculas, números y guiones. Ej: <span className="font-mono">acme-corp</span></span>
+          </p>
         </div>
 
         <div>
