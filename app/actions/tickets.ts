@@ -156,17 +156,22 @@ export async function setTicketAIMode(ticketId: string, mode: 'minimal' | 'compl
 
     if (error) return { error: error.message };
 
-    // If switching to complete, trigger reprocess on backend
+    // If switching to complete, trigger reprocess on backend with JWT
     if (mode === 'complete') {
+      const supabase = await createServerSupabase();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) return { error: 'Sesión no encontrada' };
+
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-      const webhookSecret = process.env.BACKEND_WEBHOOK_SECRET || 'supabase_webhook_secret_2024';
 
       try {
         await fetch(`${backendUrl}/api/tickets/reprocess`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-webhook-secret': webhookSecret,
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({ ticket_id: ticketId }),
           signal: AbortSignal.timeout(60000),
