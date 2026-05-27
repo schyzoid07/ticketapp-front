@@ -76,9 +76,9 @@ export async function createTicket(prevState: { error: string; ticket: TicketDat
     title: formData.get('title'),
     description: formData.get('description'),
     company_id: formData.get('company_id'),
-    user_id: formData.get('user_id'),
+    user_id: formData.get('user_id') ?? undefined,
     user_name: formData.get('user_name'),
-    email: formData.get('email'),
+    email: formData.get('email') ?? undefined,
   });
 
   if (!parsed.success) {
