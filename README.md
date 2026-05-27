@@ -6,6 +6,7 @@ Interfaz de usuario para el sistema de soporte técnico con IA. Permite a client
 
 - **Framework**: Next.js 16.2 (App Router)
 - **Estilos**: Tailwind CSS v4 con animaciones Framer Motion
+- **Paleta**: Ámbar (#f59e0b) + Naranja (#f97316) — reemplaza el indigo/purple anterior
 - **Iconos**: Lucide React
 - **Backend de datos**: Supabase (Auth + Database + Realtime)
 - **Autenticación**: Supabase SSR con `@supabase/ssr`
@@ -90,6 +91,32 @@ pnpm dev
 - **Backend IA**: El pipeline de agentes corre en un backend separado con sus propias limitaciones (Gemini 5 req/min).
 - **Sin email transactional**: No se envían notificaciones por correo (requiere Resend/SendGrid configurado).
 - **Sin Database Webhook automático**: El pipeline IA se dispara manualmente vía endpoint test hasta tener URL pública.
+
+## Prueba de funcionamiento en producción
+
+### 1. Backend
+
+```bash
+curl https://ticketapp-back.onrender.com/
+# → { "status": "ok", "service": "ticket-agent-api" }
+
+curl -X POST https://ticketapp-back.onrender.com/api/webhooks/test-process \
+  -H "Content-Type: application/json" \
+  -d '{"ticket":{"title":"Error al iniciar sesión","description":"No puedo acceder","user_name":"Carlos"}}'
+# → Debe devolver JSON con category, priority, tags, ai_context, ai_suggested_response
+```
+
+### 2. Frontend
+
+- Visitar `https://ticketapp-front.vercel.app/` → landing con botón "Registrar mi empresa"
+- Visitar `https://ticketapp-front.vercel.app/demo` → formulario público de tickets
+- Ir a `https://ticketapp-front.vercel.app/login` → loguearse con `admin@demo.com / demo123456`
+- Dashboard debe cargar tickets (si existen en Supabase)
+- Crear un ticket desde el formulario público → debe aparecer en Supabase
+
+### 3. Webhook (si configurado)
+
+Al insertar un ticket desde el formulario público, el webhook dispara el pipeline IA automáticamente. Revisar logs del backend en Render.
 
 ## Pruebas Realizadas
 
