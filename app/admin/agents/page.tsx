@@ -28,7 +28,7 @@ export default async function AdminAgentsPage() {
 
   const roleConfig: Record<string, { icon: typeof Shield; label: string; style: string }> = {
     owner: { icon: Crown, label: 'Dueño', style: 'bg-amber-100 text-amber-600' },
-    admin: { icon: Shield, label: 'Admin', style: 'bg-indigo-100 text-indigo-600' },
+    admin: { icon: Shield, label: 'Admin', style: 'bg-amber-100 text-amber-600' },
     agent: { icon: Wrench, label: 'Agente', style: 'bg-amber-50 text-amber-600' },
   };
 
@@ -43,7 +43,7 @@ export default async function AdminAgentsPage() {
       </a>
 
       <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-sm">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-sm">
           <Users className="h-5 w-5 text-white" />
         </div>
         <div>

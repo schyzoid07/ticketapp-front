@@ -37,7 +37,7 @@ export default function RootLayout({
         <header className="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-xl">
           <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
             <a href="/" className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-sm">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 shadow-sm">
                 <TicketCheck className="h-4 w-4 text-white" />
               </div>
               TicketSupport

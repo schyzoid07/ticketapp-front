@@ -3,9 +3,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-primary-light: #eef2ff;
+  --color-primary: #f59e0b;
+  --color-primary-hover: #d97706;
+  --color-primary-light: #fffbeb;
   --color-surface: var(--surface);
   --color-muted: var(--muted);
   --color-border: var(--border);
@@ -22,7 +22,7 @@
 }
 
 ::selection {
-  background: #6366f180;
+  background: #f59e0b80;
   color: white;
 }
 

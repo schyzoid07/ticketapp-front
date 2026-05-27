@@ -30,11 +30,11 @@ export function InviteAgentForm({ companyId, canInviteAdmin }: { companyId: stri
         <div className="space-y-3 rounded-xl bg-white/60 p-4 text-sm">
           <p className="text-gray-600">Comparte este enlace con el invitado:</p>
           <div className="flex items-center gap-2 rounded-lg bg-gray-100 p-2.5">
-            <LinkIcon className="h-4 w-4 shrink-0 text-indigo-400" />
-            <code className="min-w-0 truncate text-xs text-indigo-700">{state.link}</code>
+            <LinkIcon className="h-4 w-4 shrink-0 text-amber-400" />
+            <code className="min-w-0 truncate text-xs text-amber-700">{state.link}</code>
             <button
               onClick={handleCopy}
-              className="ml-auto shrink-0 rounded-md bg-white px-2 py-1 text-[10px] font-medium text-indigo-600 shadow-xs transition-colors hover:bg-indigo-50"
+              className="ml-auto shrink-0 rounded-md bg-white px-2 py-1 text-[10px] font-medium text-amber-600 shadow-xs transition-colors hover:bg-amber-50"
             >
               {copied ? 'Copiado' : <Copy className="h-3 w-3" />}
             </button>
@@ -55,12 +55,12 @@ export function InviteAgentForm({ companyId, canInviteAdmin }: { companyId: stri
             Rol
           </label>
           <div className="flex gap-2">
-            <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-xl border border-border bg-muted px-4 py-2.5 text-sm transition-colors has-[:checked]:border-indigo-300 has-[:checked]:bg-indigo-50 has-[:checked]:text-indigo-700">
+            <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-xl border border-border bg-muted px-4 py-2.5 text-sm transition-colors has-[:checked]:border-amber-300 has-[:checked]:bg-amber-50 has-[:checked]:text-amber-700">
               <input type="radio" name="role" value="agent" defaultChecked className="sr-only" />
               <Wrench className="h-4 w-4" />
               <span>Agente</span>
             </label>
-            <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-xl border border-border bg-muted px-4 py-2.5 text-sm transition-colors has-[:checked]:border-indigo-300 has-[:checked]:bg-indigo-50 has-[:checked]:text-indigo-700">
+            <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-xl border border-border bg-muted px-4 py-2.5 text-sm transition-colors has-[:checked]:border-amber-300 has-[:checked]:bg-amber-50 has-[:checked]:text-amber-700">
               <input type="radio" name="role" value="admin" className="sr-only" />
               <Shield className="h-4 w-4" />
               <span>Admin</span>
@@ -80,7 +80,7 @@ export function InviteAgentForm({ companyId, canInviteAdmin }: { companyId: stri
           id="full_name"
           name="full_name"
           required
-          className="mt-1.5 block w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm transition-colors placeholder:text-gray-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          className="mt-1.5 block w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm transition-colors placeholder:text-gray-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           placeholder="Ej: María García"
         />
       </div>
@@ -94,7 +94,7 @@ export function InviteAgentForm({ companyId, canInviteAdmin }: { companyId: stri
           id="email"
           name="email"
           required
-          className="mt-1.5 block w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm transition-colors placeholder:text-gray-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          className="mt-1.5 block w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm transition-colors placeholder:text-gray-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           placeholder="correo@empresa.com"
         />
       </div>
@@ -113,7 +113,7 @@ export function InviteAgentForm({ companyId, canInviteAdmin }: { companyId: stri
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-md disabled:opacity-50"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-amber-500 hover:to-orange-500 hover:shadow-md disabled:opacity-50"
       >
         {pending ? (
           <Loader2 className="h-4 w-4 animate-spin" />

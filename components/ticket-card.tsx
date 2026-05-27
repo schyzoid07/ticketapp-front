@@ -19,7 +19,7 @@ const categoryIcons: Record<string, typeof Bug> = {
 const statusColors: Record<string, string> = {
   RESOLVED: 'text-emerald-600 bg-emerald-50',
   CLOSED: 'text-gray-400 bg-gray-100',
-  PENDING_TRIAGE: 'text-purple-600 bg-purple-50',
+  PENDING_TRIAGE: 'text-orange-600 bg-orange-50',
   IN_PROGRESS: 'text-amber-600 bg-amber-50',
   OPEN: '',
 };
@@ -28,7 +28,7 @@ const priorityIconColors: Record<number, string> = {
   1: 'text-blue-600 bg-blue-50',
   2: 'text-yellow-600 bg-yellow-50',
   3: 'text-red-600 bg-red-50',
-  4: 'text-purple-600 bg-purple-50',
+  4: 'text-orange-600 bg-orange-50',
 };
 
 const priorityConfig: Record<number, { label: string; dot: string }> = {
@@ -39,7 +39,7 @@ const priorityConfig: Record<number, { label: string; dot: string }> = {
 };
 
 const statusConfig: Record<string, { label: string; dot: string }> = {
-  PENDING_TRIAGE: { label: 'Analizando', dot: 'bg-purple-500' },
+  PENDING_TRIAGE: { label: 'Analizando', dot: 'bg-orange-500' },
   OPEN: { label: 'Abierto', dot: 'bg-blue-500' },
   IN_PROGRESS: { label: 'En proceso', dot: 'bg-amber-500' },
   RESOLVED: { label: 'Resuelto', dot: 'bg-emerald-500' },
@@ -61,12 +61,12 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
 
   const iconColorClass = isResolved
     ? 'text-emerald-600 bg-emerald-50'
-    : (ticket.priority ? priorityIconColors[ticket.priority] : 'text-indigo-600 bg-indigo-50');
+    : (ticket.priority ? priorityIconColors[ticket.priority] : 'text-amber-600 bg-amber-50');
 
   return (
     <a
       href={`/tickets/${ticket.id}`}
-      className="group relative block overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-xs transition-all hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-500/10"
+      className="group relative block overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-xs transition-all hover:border-amber-200 hover:shadow-md hover:shadow-amber-500/10"
     >
       <div className="flex items-start gap-4">
         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${iconColorClass}`}>
@@ -75,7 +75,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="truncate text-sm font-semibold text-foreground">{ticket.title}</h3>
-            <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-indigo-500" />
+            <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-amber-500" />
           </div>
           <p className="mt-1 line-clamp-2 text-sm text-gray-500">{ticket.description}</p>
           <div className="mt-3 flex items-center gap-3">

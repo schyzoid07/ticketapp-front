@@ -33,26 +33,26 @@ export default function SignupPage() {
           <p className="text-lg font-semibold text-foreground">{state.companyName} creada</p>
           <p className="mt-1 text-sm text-gray-500">Revisa tu correo para confirmar la cuenta</p>
 
-          <div className="mt-6 w-full rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 text-left">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-indigo-600">Tu enlace de tickets</p>
+          <div className="mt-6 w-full rounded-xl border border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50 p-4 text-left">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-amber-600">Tu enlace de tickets</p>
             <div className="flex items-center gap-2">
-              <LinkIcon className="h-4 w-4 shrink-0 text-indigo-400" />
-              <code className="min-w-0 truncate text-sm text-indigo-700">{ticketLink}</code>
+              <LinkIcon className="h-4 w-4 shrink-0 text-amber-400" />
+              <code className="min-w-0 truncate text-sm text-amber-700">{ticketLink}</code>
               <button
                 onClick={handleCopy}
-                className="ml-auto shrink-0 rounded-lg bg-white/60 px-2.5 py-1 text-xs font-medium text-indigo-600 transition-colors hover:bg-white"
+                className="ml-auto shrink-0 rounded-lg bg-white/60 px-2.5 py-1 text-xs font-medium text-amber-600 transition-colors hover:bg-white"
               >
                 {copied ? 'Copiado' : <Copy className="h-3.5 w-3.5" />}
               </button>
             </div>
-            <p className="mt-2 text-xs text-indigo-500/70">
+            <p className="mt-2 text-xs text-amber-500/70">
               Comparte este enlace con tus clientes para que puedan reportar tickets
             </p>
           </div>
 
           <button
             onClick={() => router.push('/login')}
-            className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-md"
+            className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-amber-500 hover:to-orange-500 hover:shadow-md"
           >
             Ir a iniciar sesión
             <ArrowRight className="h-4 w-4" />
@@ -65,7 +65,7 @@ export default function SignupPage() {
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col px-4 py-16">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20">
           <Building2 className="h-6 w-6 text-white" />
         </div>
         <h1 className="text-xl font-bold text-foreground">Registrar empresa</h1>
@@ -84,7 +84,7 @@ export default function SignupPage() {
               id="company_name"
               name="company_name"
               required
-              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
               placeholder="Mi Empresa S.A."
             />
           </div>
@@ -102,7 +102,7 @@ export default function SignupPage() {
               name="slug"
               required
               pattern="[a-z0-9-]+"
-              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
               placeholder="mi-empresa"
             />
           </div>
@@ -124,7 +124,7 @@ export default function SignupPage() {
               id="full_name"
               name="full_name"
               required
-              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
               placeholder="Admin"
             />
           </div>
@@ -141,7 +141,7 @@ export default function SignupPage() {
               id="email"
               name="email"
               required
-              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
               placeholder="admin@empresa.com"
             />
           </div>
@@ -159,7 +159,7 @@ export default function SignupPage() {
               name="password"
               required
               minLength={6}
-              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
               placeholder="••••••••"
             />
           </div>
@@ -179,7 +179,7 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-md disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-amber-500 hover:to-orange-500 hover:shadow-md disabled:opacity-50"
         >
           {pending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -191,7 +191,7 @@ export default function SignupPage() {
 
         <p className="text-center text-xs text-gray-400">
           ¿Ya tienes cuenta?{' '}
-          <a href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+          <a href="/login" className="font-medium text-amber-600 hover:text-amber-500">
             Inicia sesión
           </a>
         </p>

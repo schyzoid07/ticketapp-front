@@ -23,7 +23,7 @@ const categoryMeta: Record<string, { icon: typeof Bug; label: string; gradient: 
   SOFTWARE_BUG: { icon: Bug, label: 'Bug de Software', gradient: 'from-red-500 to-rose-600' },
   BILLING: { icon: CreditCard, label: 'Facturación', gradient: 'from-emerald-500 to-teal-600' },
   ACCOUNT_ACCESS: { icon: KeyRound, label: 'Acceso a Cuenta', gradient: 'from-amber-500 to-orange-600' },
-  FEATURE_REQUEST: { icon: Lightbulb, label: 'Sugerencia', gradient: 'from-violet-500 to-purple-600' },
+  FEATURE_REQUEST: { icon: Lightbulb, label: 'Sugerencia', gradient: 'from-amber-500 to-orange-600' },
   GENERAL_INQUIRY: { icon: HelpCircle, label: 'Consulta', gradient: 'from-blue-500 to-cyan-600' },
 };
 
@@ -36,7 +36,7 @@ const priorityMeta: Record<number, { label: string; color: string }> = {
 };
 
 const statusMeta: Record<string, { label: string; color: string }> = {
-  PENDING_TRIAGE: { label: 'Analizando', color: 'bg-purple-50 text-purple-600' },
+  PENDING_TRIAGE: { label: 'Analizando', color: 'bg-orange-50 text-orange-600' },
   OPEN: { label: 'Abierto', color: 'bg-blue-50 text-blue-600' },
   IN_PROGRESS: { label: 'En proceso', color: 'bg-amber-50 text-amber-600' },
   RESOLVED: { label: 'Resuelto', color: 'bg-emerald-50 text-emerald-600' },
@@ -140,7 +140,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               {ticket.tags.map((tag: string) => (
                 <span
                   key={tag}
-                  className="rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 px-3 py-1 text-xs font-medium text-indigo-600"
+                  className="rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 px-3 py-1 text-xs font-medium text-amber-600"
                 >
                   {tag}
                 </span>
@@ -156,17 +156,17 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               <BrainCircuit className="h-3.5 w-3.5" />
               Análisis IA
             </h2>
-            <div className="rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
+            <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 p-4">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-medium text-indigo-600 shadow-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-medium text-amber-600 shadow-xs">
                   <span className={`h-1.5 w-1.5 rounded-full ${ticket.ai_context.is_recurring_issue ? 'bg-amber-500' : 'bg-emerald-500'}`} />
                   {ticket.ai_context.is_recurring_issue ? 'Reincidente' : 'No reincidente'}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-medium text-indigo-600 shadow-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-medium text-amber-600 shadow-xs">
                   {ticket.ai_context.customer_sentiment?.replace(/_/g, ' ')}
                 </span>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-indigo-900/70">
+              <p className="mt-3 text-sm leading-relaxed text-amber-900/70">
                 {ticket.ai_context.historical_summary}
               </p>
             </div>
@@ -180,8 +180,8 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               <BrainCircuit className="h-3.5 w-3.5" />
               Respuesta sugerida por IA
             </h2>
-            <div className="max-h-48 overflow-y-auto rounded-xl border border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
-              <pre className="whitespace-pre-wrap text-sm leading-relaxed text-indigo-900/70 font-sans">
+            <div className="max-h-48 overflow-y-auto rounded-xl border border-dashed border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4">
+              <pre className="whitespace-pre-wrap text-sm leading-relaxed text-amber-900/70 font-sans">
                 {ticket.ai_suggested_response}
               </pre>
             </div>
@@ -233,7 +233,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
                     <div
                       className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                         reply.author_type === 'agent'
-                          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                          ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white'
                           : 'border border-border bg-surface'
                       }`}
                     >

@@ -46,8 +46,8 @@ export function AuthStatus() {
 
   const roleMeta: Record<string, { icon: typeof Shield; label: string; color: string }> = {
     owner: { icon: Crown, label: 'Dueño', color: 'text-amber-600 bg-amber-100' },
-    admin: { icon: Shield, label: 'Admin', color: 'text-indigo-600 bg-indigo-100' },
-    agent: { icon: Wrench, label: 'Agente', color: 'text-purple-600 bg-purple-100' },
+    admin: { icon: Shield, label: 'Admin', color: 'text-amber-600 bg-amber-100' },
+    agent: { icon: Wrench, label: 'Agente', color: 'text-orange-600 bg-orange-100' },
   };
 
   const meta = roleMeta[role] || roleMeta.agent;

@@ -76,7 +76,7 @@ export function TicketFilters({
           <select
             value={currentPriority}
             onChange={(e) => applyFilter('priority', e.target.value)}
-            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           >
             {priorities.map((p) => (
               <option key={p.value} value={p.value}>{p.label}</option>
@@ -86,7 +86,7 @@ export function TicketFilters({
           <select
             value={currentStatus}
             onChange={(e) => applyFilter('status', e.target.value)}
-            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           >
             {statuses.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -96,7 +96,7 @@ export function TicketFilters({
           <select
             value={currentAssigned}
             onChange={(e) => applyFilter('assigned_to', e.target.value)}
-            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           >
             <option value="">Todos los agentes</option>
             <option value="unassigned">Sin asignar</option>
@@ -112,7 +112,7 @@ export function TicketFilters({
             type="date"
             value={currentFrom}
             onChange={(e) => applyFilter('from', e.target.value)}
-            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
             placeholder="Desde"
           />
 
@@ -120,7 +120,7 @@ export function TicketFilters({
             type="date"
             value={currentTo}
             onChange={(e) => applyFilter('to', e.target.value)}
-            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
             placeholder="Hasta"
           />
         </div>
@@ -132,7 +132,7 @@ export function TicketFilters({
           <span className="font-medium text-gray-400">Leyenda:</span>
           <span className="inline-flex items-center gap-1"><CheckCircle className="h-3 w-3 text-emerald-600" /> Resuelto</span>
           <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3 text-amber-600" /> En proceso</span>
-          <span className="inline-flex items-center gap-1"><ShieldAlert className="h-3 w-3 text-purple-600" /> Crítico</span>
+          <span className="inline-flex items-center gap-1"><ShieldAlert className="h-3 w-3 text-orange-600" /> Crítico</span>
           <span className="inline-flex items-center gap-1"><Flame className="h-3 w-3 text-red-600" /> Alta</span>
           <span className="inline-flex items-center gap-1"><Zap className="h-3 w-3 text-yellow-600" /> Media</span>
           <span className="inline-flex items-center gap-1"><Star className="h-3 w-3 text-blue-600" /> Baja</span>

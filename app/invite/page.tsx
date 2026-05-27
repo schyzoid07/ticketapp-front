@@ -52,7 +52,7 @@ function InvitePage() {
           <p className="mt-1 text-sm text-gray-500">Ya puedes iniciar sesión con tu correo y contraseña</p>
           <button
             onClick={() => router.push('/login')}
-            className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-md"
+            className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-amber-500 hover:to-orange-500 hover:shadow-md"
           >
             Iniciar sesión
             <ArrowRight className="h-4 w-4" />
@@ -65,7 +65,7 @@ function InvitePage() {
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col px-4 py-24">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20">
           <KeyRound className="h-6 w-6 text-white" />
         </div>
         <h1 className="text-xl font-bold text-foreground">Aceptar invitación</h1>
@@ -87,7 +87,7 @@ function InvitePage() {
               name="password"
               required
               minLength={6}
-              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
               placeholder="••••••••"
             />
           </div>
@@ -105,7 +105,7 @@ function InvitePage() {
               name="confirm"
               required
               minLength={6}
-              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="block w-full rounded-xl border border-border bg-muted py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
               placeholder="••••••••"
               onChange={(e) => {
                 const pass = (document.getElementById('password') as HTMLInputElement)?.value;
@@ -133,7 +133,7 @@ function InvitePage() {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-md disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-amber-500 hover:to-orange-500 hover:shadow-md disabled:opacity-50"
         >
           {pending ? (
             <Loader2 className="h-4 w-4 animate-spin" />

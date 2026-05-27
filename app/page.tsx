@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col px-4 py-16">
       <div className="mb-10 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20">
           <HeadphonesIcon className="h-7 w-7 text-white" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -18,16 +18,16 @@ export default function Home() {
       <div className="space-y-4">
         <a
           href="/signup"
-          className="group flex items-center gap-4 rounded-2xl border border-border bg-surface p-5 shadow-xs transition-all hover:border-indigo-200 hover:shadow-md"
+          className="group flex items-center gap-4 rounded-2xl border border-border bg-surface p-5 shadow-xs transition-all hover:border-amber-200 hover:shadow-md"
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-sm">
             <Building2 className="h-6 w-6 text-white" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">Registrar mi empresa</p>
             <p className="text-xs text-gray-400">Crea tu espacio de soporte y comparte el enlace con tus clientes</p>
           </div>
-          <ArrowRight className="h-5 w-5 shrink-0 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-indigo-500" />
+          <ArrowRight className="h-5 w-5 shrink-0 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-amber-500" />
         </a>
 
         <div className="relative">

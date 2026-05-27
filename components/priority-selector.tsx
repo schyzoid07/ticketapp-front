@@ -34,7 +34,7 @@ export function PrioritySelector({ ticketId, currentPriority }: { ticketId: stri
             disabled={pending}
             className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all disabled:opacity-50 ${
               selected === p.value
-                ? `${p.color} ring-2 ring-indigo-400/40`
+                ? `${p.color} ring-2 ring-amber-400/40`
                 : `text-gray-400 hover:text-gray-600`
             }`}
           >
