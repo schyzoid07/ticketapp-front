@@ -11,8 +11,8 @@ function formatNumber(n: number): string {
   return n.toLocaleString('es');
 }
 
-function TokenRow({ label, icon: Icon, data, color }: { label: string; icon: typeof Zap; data: TokenUsageAggregate; color: string }) {
-  const pct = data.totalTokens > 0 ? '100' : '0';
+function TokenRow({ label, icon: Icon, data, color, max }: { label: string; icon: typeof Zap; data: TokenUsageAggregate; color: string; max?: number }) {
+  const pct = (max && max > 0) ? Math.round((data.totalTokens / max) * 100).toString() : (data.totalTokens > 0 ? '100' : '0');
   return (
     <div className="flex items-center gap-3 rounded-xl bg-muted/50 px-4 py-3">
       <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${color}`}>
@@ -163,11 +163,11 @@ export default async function AdminTokensPage() {
           </h2>
         </div>
         <div className="space-y-2">
-          <TokenRow label="Triage" icon={Zap} data={currentMonth.triage} color="bg-amber-500" />
-          <TokenRow label="Contexto" icon={Search} data={currentMonth.context} color="bg-blue-500" />
-          <TokenRow label="Respuesta" icon={MessageSquare} data={currentMonth.response} color="bg-emerald-500" />
+          <TokenRow label="Triage" icon={Zap} data={currentMonth.triage} color="bg-amber-500" max={currentMonth.total.totalTokens} />
+          <TokenRow label="Contexto" icon={Search} data={currentMonth.context} color="bg-blue-500" max={currentMonth.total.totalTokens} />
+          <TokenRow label="Respuesta" icon={MessageSquare} data={currentMonth.response} color="bg-emerald-500" max={currentMonth.total.totalTokens} />
           <div className="border-t border-border pt-2">
-            <TokenRow label="Total" icon={Cpu} data={currentMonth.total} color="bg-orange-600" />
+            <TokenRow label="Total" icon={Cpu} data={currentMonth.total} color="bg-orange-600" max={currentMonth.total.totalTokens} />
           </div>
         </div>
       </div>
