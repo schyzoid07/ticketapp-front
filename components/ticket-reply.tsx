@@ -12,12 +12,14 @@ export function TicketReply({
   agentName,
   aiSuggestion,
   replies,
+  ticketStatus,
 }: {
   ticketId: string;
   userId: string;
   agentName: string;
   aiSuggestion: string | null;
   replies: Reply[];
+  ticketStatus?: string;
 }) {
   const [state, formAction, pending] = useActionState<{ error: string; success: boolean }, FormData>(sendReply, { error: '', success: false });
 
@@ -81,7 +83,6 @@ export function TicketReply({
       ) : (
         <form action={formAction} className="space-y-3">
           <input type="hidden" name="ticket_id" value={ticketId} />
-          <input type="hidden" name="user_id" value={userId} />
           <input type="hidden" name="author_name" value={agentName} />
 
           <div>
@@ -106,8 +107,6 @@ export function TicketReply({
 
           <button
             type="submit"
-            name="status"
-            value="RESOLVED"
             disabled={pending}
             className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-emerald-500 hover:to-emerald-400 hover:shadow-md disabled:opacity-50"
           >
@@ -116,7 +115,7 @@ export function TicketReply({
             ) : (
               <Send className="h-4 w-4" />
             )}
-            Enviar respuesta y resolver ticket
+            {ticketStatus === 'OPEN' ? 'Tomar y resolver ticket' : 'Enviar respuesta y resolver ticket'}
           </button>
         </form>
       )}

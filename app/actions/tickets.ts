@@ -4,6 +4,14 @@ import { headers } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createServerSupabase } from '@/lib/supabase-server';
 import type { TicketData, ReplyState } from '@/lib/types';
+import {
+  CreateTicketSchema,
+  RegisterCompanySchema,
+  AcceptInvitationSchema,
+  CreateInvitationSchema,
+  SendReplySchema,
+  TicketDataSchema,
+} from '@/lib/schemas';
 
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
@@ -62,16 +70,20 @@ function getClient() {
 }
 
 export async function createTicket(prevState: { error: string; ticket: TicketData | null; rateLimit?: { remaining: number; resetMinutes: number } }, formData: FormData) {
-  const title = formData.get('title') as string;
-  const description = formData.get('description') as string;
-  const companyId = formData.get('company_id') as string;
-  const userId = formData.get('user_id') as string;
-  const userName = formData.get('user_name') as string;
-  const email = formData.get('email') as string;
+  const parsed = CreateTicketSchema.safeParse({
+    title: formData.get('title'),
+    description: formData.get('description'),
+    company_id: formData.get('company_id'),
+    user_id: formData.get('user_id'),
+    user_name: formData.get('user_name'),
+    email: formData.get('email'),
+  });
 
-  if (!title || !description) {
-    return { error: 'Título y descripción son requeridos', ticket: null };
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((e: { message: string }) => e.message).join(', '), ticket: null };
   }
+
+  const { title, description, company_id: companyId, user_id: userId, user_name: userName, email } = parsed.data;
 
   const clientIp = await getClientIp();
   const rateKey = userId || clientIp;
@@ -106,7 +118,13 @@ export async function createTicket(prevState: { error: string; ticket: TicketDat
       return { error: error.message, ticket: null };
     }
 
-    return { ticket: data as unknown as TicketData, error: '', rateLimit: { remaining: rateCheck.remaining, resetMinutes: rateCheck.resetMinutes } };
+    const validated = TicketDataSchema.safeParse(data);
+    if (!validated.success) {
+      console.error('Respuesta de Supabase inválida:', validated.error);
+      return { error: 'Error inesperado al crear ticket', ticket: null };
+    }
+
+    return { ticket: validated.data, error: '', rateLimit: { remaining: rateCheck.remaining, resetMinutes: rateCheck.resetMinutes } };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
     console.error('Error al crear ticket:', message);
@@ -133,15 +151,19 @@ export async function setTicketPriority(ticketId: string, priority: number) {
 }
 
 export async function registerCompany(prevState: { error: string; success: boolean; slug?: string; companyName?: string }, formData: FormData) {
-  const companyName = formData.get('company_name') as string;
-  const slug = formData.get('slug') as string;
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
-  const fullName = formData.get('full_name') as string;
+  const parsed = RegisterCompanySchema.safeParse({
+    company_name: formData.get('company_name'),
+    slug: formData.get('slug'),
+    email: formData.get('email'),
+    password: formData.get('password'),
+    full_name: formData.get('full_name'),
+  });
 
-  if (!companyName || !slug || !email || !password || !fullName) {
-    return { error: 'Todos los campos son requeridos', success: false, slug: undefined };
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((e: { message: string }) => e.message).join(', '), success: false };
   }
+
+  const { company_name: companyName, slug, email, password, full_name: fullName } = parsed.data;
 
   try {
     const client = getClient();
@@ -214,15 +236,18 @@ export async function createInvitation(prevState: { error: string; success: bool
     const currentRole = user.user_metadata?.role;
     requireRole(user, 'owner', 'admin');
 
-    const companyId = formData.get('company_id') as string;
-    const email = formData.get('email') as string;
-    const fullName = formData.get('full_name') as string;
-    const role = formData.get('role') as string;
-    const targetRole = role === 'admin' ? 'admin' : 'agent';
+    const parsed = CreateInvitationSchema.safeParse({
+      company_id: formData.get('company_id'),
+      email: formData.get('email'),
+      full_name: formData.get('full_name'),
+      role: formData.get('role'),
+    });
 
-    if (!companyId || !email || !fullName) {
-      return { error: 'Todos los campos son requeridos', success: false };
+    if (!parsed.success) {
+      return { error: parsed.error.issues.map((e: { message: string }) => e.message).join(', '), success: false };
     }
+
+    const { company_id: companyId, email, full_name: fullName, role: targetRole } = parsed.data;
 
     // Admin solo puede invitar agents
     if (currentRole === 'admin' && targetRole === 'admin') {
@@ -265,12 +290,16 @@ export async function createInvitation(prevState: { error: string; success: bool
 }
 
 export async function acceptInvitation(prevState: { error: string; success: boolean }, formData: FormData) {
-  const token = formData.get('token') as string;
-  const password = formData.get('password') as string;
+  const parsed = AcceptInvitationSchema.safeParse({
+    token: formData.get('token'),
+    password: formData.get('password'),
+  });
 
-  if (!token || !password) {
-    return { error: 'Token y contraseña son requeridos', success: false };
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((e: { message: string }) => e.message).join(', '), success: false };
   }
+
+  const { token, password } = parsed.data;
 
   try {
     const client = getClient();
@@ -411,9 +440,62 @@ export async function getAgentResolvedTickets(agentUserId: string) {
   }
 }
 
+export async function claimTicket(ticketId: string) {
+  try {
+    const user = await requireUser();
+    const userId = user.id;
+    const role = user.user_metadata?.role;
+    if (role !== 'agent') return { error: 'Solo los agentes pueden tomar tickets', success: false };
+
+    const client = getClient();
+
+    const { data: ticket } = await client
+      .from('tickets')
+      .select('status, assigned_to')
+      .eq('id', ticketId)
+      .single();
+
+    if (!ticket) return { error: 'Ticket no encontrado', success: false };
+    if (ticket.status !== 'OPEN') return { error: 'Este ticket no está disponible para tomar', success: false };
+    if (ticket.assigned_to) return { error: 'Este ticket ya está asignado a otro agente', success: false };
+
+    const { error } = await client
+      .from('tickets')
+      .update({
+        status: 'IN_PROGRESS',
+        assigned_to: userId,
+        assigned_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', ticketId);
+
+    if (error) return { error: error.message, success: false };
+    return { success: true, error: '' };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Error desconocido', success: false };
+  }
+}
+
+export async function getCompanyAgents(companyId: string) {
+  try {
+    const client = getClient();
+    const { data, error } = await client
+      .from('users')
+      .select('id, email, full_name, role')
+      .eq('company_id', companyId)
+      .eq('role', 'agent')
+      .order('full_name', { ascending: true });
+
+    if (error) return { agents: [] };
+    return { agents: data || [] };
+  } catch {
+    return { agents: [] };
+  }
+}
+
 export async function getTickets(
   companyId: string,
-  filters?: { priority?: string; status?: string; from?: string; to?: string },
+  filters?: { priority?: string; status?: string; from?: string; to?: string; assigned_to?: string },
   options?: { limit?: number; offset?: number }
 ) {
   try {
@@ -430,6 +512,14 @@ export async function getTickets(
 
     if (filters?.status) {
       query = query.eq('status', filters.status);
+    }
+
+    if (filters?.assigned_to) {
+      if (filters.assigned_to === 'unassigned') {
+        query = query.is('assigned_to', null);
+      } else {
+        query = query.eq('assigned_to', filters.assigned_to);
+      }
     }
 
     if (filters?.from) {
@@ -494,26 +584,45 @@ export async function getTicket(id: string) {
 
 export async function sendReply(prevState: ReplyState, formData: FormData) {
   try {
-    await requireUser();
+    const user = await requireUser();
+    const userId = user.id;
 
-    const ticketId = formData.get('ticket_id') as string;
-    const body = formData.get('body') as string;
-    const userId = formData.get('user_id') as string;
-    const authorName = formData.get('author_name') as string;
+    const parsed = SendReplySchema.safeParse({
+      ticket_id: formData.get('ticket_id'),
+      body: formData.get('body'),
+      author_name: formData.get('author_name'),
+    });
 
-    if (!ticketId || !body) {
-      return { error: 'Faltan datos requeridos', success: false };
+    if (!parsed.success) {
+      return { error: parsed.error.issues.map((e: { message: string }) => e.message).join(', '), success: false };
     }
 
+    const { ticket_id: ticketId, body, author_name: authorName } = parsed.data;
+    const agentName = authorName || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Agente';
+
     const client = getClient();
+
+    const { data: ticket } = await client
+      .from('tickets')
+      .select('status, assigned_to')
+      .eq('id', ticketId)
+      .single();
+
+    if (!ticket) return { error: 'Ticket no encontrado', success: false };
+    if (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') {
+      return { error: 'Este ticket ya está resuelto o cerrado', success: false };
+    }
+    if (ticket.status === 'IN_PROGRESS' && ticket.assigned_to && ticket.assigned_to !== userId) {
+      return { error: 'Este ticket está siendo atendido por otro agente', success: false };
+    }
 
     const { error: replyError } = await client
       .from('ticket_replies')
       .insert({
         ticket_id: ticketId,
-        user_id: userId || null,
+        user_id: userId,
         author_type: 'agent',
-        author_name: authorName || null,
+        author_name: agentName,
         body,
       });
 
@@ -526,7 +635,8 @@ export async function sendReply(prevState: ReplyState, formData: FormData) {
       .update({
         status: 'RESOLVED',
         resolution: body,
-        assigned_to: userId || null,
+        assigned_to: userId,
+        assigned_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', ticketId);

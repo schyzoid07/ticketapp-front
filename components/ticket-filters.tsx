@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Filter, X, Bug, ShieldAlert, Flame, Zap, Star, CheckCircle } from 'lucide-react';
+import { Filter, X, Bug, ShieldAlert, Flame, Zap, Star, CheckCircle, Clock } from 'lucide-react';
 
 const priorities = [
   { value: '', label: 'Todas' },
@@ -15,16 +15,26 @@ const statuses = [
   { value: '', label: 'Todos' },
   { value: 'PENDING_TRIAGE', label: 'Analizando' },
   { value: 'OPEN', label: 'Abierto' },
+  { value: 'IN_PROGRESS', label: 'En proceso' },
   { value: 'RESOLVED', label: 'Resuelto' },
   { value: 'CLOSED', label: 'Cerrado' },
 ];
 
-export function TicketFilters() {
+export function TicketFilters({
+  userId,
+  userRole,
+  agents,
+}: {
+  userId?: string;
+  userRole?: string;
+  agents?: { id: string; full_name: string | null; email: string }[];
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const currentPriority = searchParams.get('priority') || '';
   const currentStatus = searchParams.get('status') || '';
+  const currentAssigned = searchParams.get('assigned_to') || '';
   const currentFrom = searchParams.get('from') || '';
   const currentTo = searchParams.get('to') || '';
 
@@ -42,7 +52,9 @@ export function TicketFilters() {
     router.push('/dashboard');
   }
 
-  const hasFilters = currentPriority || currentStatus || currentFrom || currentTo;
+  const hasFilters = currentPriority || currentStatus || currentAssigned || currentFrom || currentTo;
+
+  const isAdmin = userRole === 'owner' || userRole === 'admin';
 
   return (
     <div className="space-y-3">
@@ -81,6 +93,21 @@ export function TicketFilters() {
             ))}
           </select>
 
+          <select
+            value={currentAssigned}
+            onChange={(e) => applyFilter('assigned_to', e.target.value)}
+            className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
+            <option value="">Todos los agentes</option>
+            <option value="unassigned">Sin asignar</option>
+            {!isAdmin && userId && (
+              <option value={userId}>Mis tickets</option>
+            )}
+            {isAdmin && agents && agents.map((a) => (
+              <option key={a.id} value={a.id}>{a.full_name || a.email}</option>
+            ))}
+          </select>
+
           <input
             type="date"
             value={currentFrom}
@@ -104,6 +131,7 @@ export function TicketFilters() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
           <span className="font-medium text-gray-400">Leyenda:</span>
           <span className="inline-flex items-center gap-1"><CheckCircle className="h-3 w-3 text-emerald-600" /> Resuelto</span>
+          <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3 text-amber-600" /> En proceso</span>
           <span className="inline-flex items-center gap-1"><ShieldAlert className="h-3 w-3 text-purple-600" /> Crítico</span>
           <span className="inline-flex items-center gap-1"><Flame className="h-3 w-3 text-red-600" /> Alta</span>
           <span className="inline-flex items-center gap-1"><Zap className="h-3 w-3 text-yellow-600" /> Media</span>

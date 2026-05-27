@@ -20,6 +20,7 @@ const statusColors: Record<string, string> = {
   RESOLVED: 'text-emerald-600 bg-emerald-50',
   CLOSED: 'text-gray-400 bg-gray-100',
   PENDING_TRIAGE: 'text-purple-600 bg-purple-50',
+  IN_PROGRESS: 'text-amber-600 bg-amber-50',
   OPEN: '',
 };
 
@@ -40,6 +41,7 @@ const priorityConfig: Record<number, { label: string; dot: string }> = {
 const statusConfig: Record<string, { label: string; dot: string }> = {
   PENDING_TRIAGE: { label: 'Analizando', dot: 'bg-purple-500' },
   OPEN: { label: 'Abierto', dot: 'bg-blue-500' },
+  IN_PROGRESS: { label: 'En proceso', dot: 'bg-amber-500' },
   RESOLVED: { label: 'Resuelto', dot: 'bg-emerald-500' },
   CLOSED: { label: 'Cerrado', dot: 'bg-gray-400' },
 };

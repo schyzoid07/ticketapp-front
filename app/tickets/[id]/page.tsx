@@ -12,9 +12,11 @@ import {
   BrainCircuit,
   Clock,
   Shield,
+  UserCheck,
 } from 'lucide-react';
 import { TicketReply } from '@/components/ticket-reply';
 import { PrioritySelector } from '@/components/priority-selector';
+import { ClaimButton } from '@/components/claim-button';
 import { createServerSupabase } from '@/lib/supabase-server';
 
 const categoryMeta: Record<string, { icon: typeof Bug; label: string; gradient: string }> = {
@@ -36,6 +38,7 @@ const priorityMeta: Record<number, { label: string; color: string }> = {
 const statusMeta: Record<string, { label: string; color: string }> = {
   PENDING_TRIAGE: { label: 'Analizando', color: 'bg-purple-50 text-purple-600' },
   OPEN: { label: 'Abierto', color: 'bg-blue-50 text-blue-600' },
+  IN_PROGRESS: { label: 'En proceso', color: 'bg-amber-50 text-amber-600' },
   RESOLVED: { label: 'Resuelto', color: 'bg-emerald-50 text-emerald-600' },
   CLOSED: { label: 'Cerrado', color: 'bg-gray-100 text-gray-500' },
 };
@@ -50,6 +53,8 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   const currentUserId = user.id;
   const currentRole = user.user_metadata?.role as string;
   const canChangePriority = currentRole === 'owner' || currentRole === 'admin';
+  const isAgent = currentRole === 'agent';
+  const canClaim = currentRole === 'agent' || currentRole === 'admin' || currentRole === 'owner';
   const agentName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Agente';
 
   const { ticket, replies, error } = await getTicket(id);
@@ -70,6 +75,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   const pri = priorityMeta[ticket.priority ?? 0];
   const st = statusMeta[ticket.status] ?? { label: ticket.status, color: 'bg-gray-100 text-gray-500' };
   const isResolved = ticket.status === 'RESOLVED' || ticket.status === 'CLOSED';
+  const isClaimable = ticket.status === 'OPEN' && isAgent && !ticket.assigned_to;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12">
@@ -167,8 +173,8 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
           </div>
         )}
 
-        {/* AI Suggested Response - scrollable, half width */}
-        {ticket.ai_suggested_response && !isResolved && (
+        {/* AI Suggested Response */}
+        {ticket.ai_suggested_response && ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && (
           <div className="border-b border-border p-6">
             <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
               <BrainCircuit className="h-3.5 w-3.5" />
@@ -182,11 +188,19 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
           </div>
         )}
 
-        {/* Reply Section */}
+        {/* Claim Button (OPEN + not assigned) */}
+        {isClaimable && (
+          <div className="border-b border-border p-6">
+            <ClaimButton ticketId={ticket.id} />
+          </div>
+        )}
+
+        {/* Reply Section (OPEN or IN_PROGRESS, not terminal) */}
         {!isResolved && (
           <div className="p-6">
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-400">
-              Responder ticket
+            <h2 className="mb-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              <UserCheck className="h-3.5 w-3.5" />
+              {ticket.status === 'OPEN' ? 'Tomar y responder ticket' : 'Responder ticket'}
             </h2>
             <TicketReply
               ticketId={ticket.id}
@@ -194,6 +208,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               agentName={agentName}
               aiSuggestion={ticket.ai_suggested_response}
               replies={replies || []}
+              ticketStatus={ticket.status}
             />
           </div>
         )}

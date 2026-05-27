@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { LayoutDashboard, Plus } from 'lucide-react';
 import { TicketList } from '@/components/ticket-list';
 import { TicketFilters } from '@/components/ticket-filters';
-import { getTickets, getCompanyById } from '@/app/actions/tickets';
+import { getTickets, getCompanyById, getCompanyAgents } from '@/app/actions/tickets';
 import { createServerSupabase } from '@/lib/supabase-server';
 
 export default async function DashboardPage(props: { searchParams?: Promise<Record<string, string>> }) {
@@ -15,16 +15,23 @@ export default async function DashboardPage(props: { searchParams?: Promise<Reco
   if (!user) redirect('/login');
 
   const companyId = user.user_metadata?.company_id as string;
+  const userId = user.id;
+  const userRole = user.user_metadata?.role as string;
+  const isAdmin = userRole === 'owner' || userRole === 'admin';
 
   const filters = {
     priority: searchParams?.priority,
     status: searchParams?.status,
     from: searchParams?.from,
     to: searchParams?.to,
+    assigned_to: searchParams?.assigned_to,
   };
 
-  const { tickets } = await getTickets(companyId, filters);
-  const { company } = await getCompanyById(companyId);
+  const [{ tickets }, { company }, { agents }] = await Promise.all([
+    getTickets(companyId, filters),
+    getCompanyById(companyId),
+    isAdmin ? getCompanyAgents(companyId) : Promise.resolve({ agents: [] }),
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12">
@@ -49,7 +56,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<Reco
 
       <div className="mb-6">
         <Suspense fallback={null}>
-          <TicketFilters />
+          <TicketFilters userId={userId} userRole={userRole} agents={agents} />
         </Suspense>
       </div>
 
