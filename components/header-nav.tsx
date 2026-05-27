@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, User } from 'lucide-react';
+import { LayoutDashboard, Users, User, BarChart3 } from 'lucide-react';
 import { createClient } from '@/lib/supabase-client';
 
 export function HeaderNav() {
@@ -38,6 +38,15 @@ export function HeaderNav() {
         >
           <Users className="h-4 w-4" />
           Equipo
+        </a>
+      )}
+      {showTeam && (
+        <a
+          href="/admin/tokens"
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-muted hover:text-gray-800"
+        >
+          <BarChart3 className="h-4 w-4" />
+          Tokens
         </a>
       )}
     </>

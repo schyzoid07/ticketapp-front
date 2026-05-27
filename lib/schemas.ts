@@ -71,6 +71,47 @@ export const TokenUsageSchema = z.object({
 
 export type TokenUsage = z.infer<typeof TokenUsageSchema>;
 
+export const TokenUsageAggregateSchema = z.object({
+  promptTokens: z.number(),
+  candidatesTokens: z.number(),
+  totalTokens: z.number(),
+});
+
+export type TokenUsageAggregate = z.infer<typeof TokenUsageAggregateSchema>;
+
+export const MonthlyTokenUsageSchema = z.object({
+  total: TokenUsageAggregateSchema,
+  triage: TokenUsageAggregateSchema,
+  context: TokenUsageAggregateSchema,
+  response: TokenUsageAggregateSchema,
+  ticketCount: z.number(),
+});
+
+export type MonthlyTokenUsage = z.infer<typeof MonthlyTokenUsageSchema>;
+
+export const DailyTokenUsageSchema = z.object({
+  date: z.string(),
+  totalTokens: z.number(),
+  ticketCount: z.number(),
+});
+
+export type DailyTokenUsage = z.infer<typeof DailyTokenUsageSchema>;
+
+export const CompanyTokenUsageReportSchema = z.object({
+  currentMonth: MonthlyTokenUsageSchema,
+  previousMonthTotal: z.number(),
+  previousMonthTicketCount: z.number(),
+  dailyUsage: z.array(DailyTokenUsageSchema),
+  recentTickets: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    created_at: z.string(),
+    totalTokens: z.number(),
+  })),
+});
+
+export type CompanyTokenUsageReport = z.infer<typeof CompanyTokenUsageReportSchema>;
+
 export const TicketFullSchema = TicketSchema.extend({
   company_id: z.string(),
   user_id: z.string().nullable(),
@@ -80,6 +121,7 @@ export const TicketFullSchema = TicketSchema.extend({
   ai_context: AiContextSchema.nullable(),
   ai_suggested_response: z.string().nullable(),
   ai_token_usage: TokenUsageSchema.nullable(),
+  ai_mode: z.enum(['minimal', 'complete']).default('minimal'),
   resolution: z.string().nullable(),
   assigned_to: z.string().nullable(),
   resolved_by_name: z.string().nullable(),

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { TicketReply } from '@/components/ticket-reply';
 import { PrioritySelector } from '@/components/priority-selector';
+import { AIModeSelector } from '@/components/ai-mode-selector';
 import { ClaimButton } from '@/components/claim-button';
 import { createServerSupabase } from '@/lib/supabase-server';
 
@@ -66,6 +67,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   }
 
   const tokenUsage = (ticket as unknown as { ai_token_usage: TokenUsage | null }).ai_token_usage;
+  const aiMode = (ticket as unknown as { ai_mode?: 'minimal' | 'complete' }).ai_mode || 'minimal';
 
   const date = new Date(ticket.created_at).toLocaleDateString('es-ES', {
     year: 'numeric',
@@ -116,7 +118,10 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             </div>
             <div className="flex flex-col items-end gap-3">
               {!isResolved && canChangePriority && (
-                <PrioritySelector ticketId={ticket.id} currentPriority={ticket.priority} />
+                <>
+                  <PrioritySelector ticketId={ticket.id} currentPriority={ticket.priority} />
+                  <AIModeSelector ticketId={ticket.id} currentMode={aiMode} />
+                </>
               )}
               {cat && (
                 <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${cat.gradient} shadow-sm`}>
@@ -212,23 +217,30 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
               <Zap className="h-3.5 w-3.5" />
               Tokens consumidos (Gemini)
+              <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-normal normal-case tracking-normal text-gray-500">
+                {aiMode === 'minimal' ? 'Solo triaje' : 'Completo'}
+              </span>
             </h2>
             <div className="rounded-xl bg-gradient-to-br from-muted to-surface p-4">
               <div className="grid grid-cols-4 gap-2 text-center text-xs">
                 <div className="rounded-lg bg-amber-50 p-2">
-                  <p className="font-semibold text-amber-700 tabular-nums">{tokenUsage.triage.totalTokens.toLocaleString()}</p>
+                  <p className="font-semibold text-amber-700 tabular-nums">{tokenUsage.triage?.totalTokens?.toLocaleString() ?? 0}</p>
                   <p className="mt-0.5 text-amber-500">Triage</p>
                 </div>
-                <div className="rounded-lg bg-amber-50 p-2">
-                  <p className="font-semibold text-amber-700 tabular-nums">{tokenUsage.context.totalTokens.toLocaleString()}</p>
-                  <p className="mt-0.5 text-amber-500">Contexto</p>
+                <div className={`rounded-lg p-2 ${tokenUsage.context ? 'bg-amber-50' : 'bg-gray-50'}`}>
+                  <p className={`font-semibold tabular-nums ${tokenUsage.context ? 'text-amber-700' : 'text-gray-400'}`}>
+                    {tokenUsage.context?.totalTokens?.toLocaleString() ?? '—'}
+                  </p>
+                  <p className={`mt-0.5 ${tokenUsage.context ? 'text-amber-500' : 'text-gray-400'}`}>Contexto</p>
                 </div>
-                <div className="rounded-lg bg-amber-50 p-2">
-                  <p className="font-semibold text-amber-700 tabular-nums">{tokenUsage.response.totalTokens.toLocaleString()}</p>
-                  <p className="mt-0.5 text-amber-500">Respuesta</p>
+                <div className={`rounded-lg p-2 ${tokenUsage.response ? 'bg-amber-50' : 'bg-gray-50'}`}>
+                  <p className={`font-semibold tabular-nums ${tokenUsage.response ? 'text-amber-700' : 'text-gray-400'}`}>
+                    {tokenUsage.response?.totalTokens?.toLocaleString() ?? '—'}
+                  </p>
+                  <p className={`mt-0.5 ${tokenUsage.response ? 'text-amber-500' : 'text-gray-400'}`}>Respuesta</p>
                 </div>
                 <div className="rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 p-2 text-white">
-                  <p className="font-semibold tabular-nums">{tokenUsage.total.totalTokens.toLocaleString()}</p>
+                  <p className="font-semibold tabular-nums">{tokenUsage.total?.totalTokens?.toLocaleString() ?? 0}</p>
                   <p className="mt-0.5 text-white/70">Total</p>
                 </div>
               </div>

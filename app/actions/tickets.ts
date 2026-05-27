@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { createServerSupabase } from '@/lib/supabase-server';
 import { fireOutboundWebhook } from '@/lib/webhook-outbound';
 import { sendEmail, buildTicketResolvedEmail } from '@/lib/email';
-import type { TicketData, ReplyState } from '@/lib/types';
+import type { TicketData, ReplyState, TokenUsage, DailyTokenUsage, CompanyTokenUsageReport } from '@/lib/types';
 import {
   CreateTicketSchema,
   RegisterCompanySchema,
@@ -139,6 +139,50 @@ export async function createTicket(prevState: { error: string; ticket: TicketDat
     }
 
     return { error: message, ticket: null };
+  }
+}
+
+export async function setTicketAIMode(ticketId: string, mode: 'minimal' | 'complete') {
+  try {
+    const user = await requireUser();
+    requireRole(user, 'owner', 'admin');
+
+    const client = getClient();
+
+    const { error } = await client
+      .from('tickets')
+      .update({ ai_mode: mode, updated_at: new Date().toISOString() })
+      .eq('id', ticketId);
+
+    if (error) return { error: error.message };
+
+    // If switching to complete, trigger reprocess on backend
+    if (mode === 'complete') {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+      const webhookSecret = process.env.BACKEND_WEBHOOK_SECRET || 'supabase_webhook_secret_2024';
+
+      try {
+        await fetch(`${backendUrl}/api/tickets/reprocess`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-webhook-secret': webhookSecret,
+          },
+          body: JSON.stringify({ ticket_id: ticketId }),
+          signal: AbortSignal.timeout(60000),
+        });
+      } catch (fetchErr) {
+        console.error('Error al reprocesar ticket:', fetchErr);
+        return { error: 'Modo actualizado pero hubo un error al reprocesar con IA completa. Intenta de nuevo.' };
+      }
+    }
+
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath(`/tickets/${ticketId}`);
+
+    return { error: null };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Error desconocido' };
   }
 }
 
@@ -560,6 +604,121 @@ export async function getCompanyAgents(companyId: string) {
     return { agents: data || [] };
   } catch {
     return { agents: [] };
+  }
+}
+
+function getMonthRange(offset: number) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + offset;
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
+function sumTokens(usage: { promptTokens: number; candidatesTokens: number; totalTokens: number } | undefined, accum: { promptTokens: number; candidatesTokens: number; totalTokens: number }) {
+  if (!usage) return;
+  accum.promptTokens += usage.promptTokens;
+  accum.candidatesTokens += usage.candidatesTokens;
+  accum.totalTokens += usage.totalTokens;
+}
+
+export async function getCompanyTokenUsage(companyId: string): Promise<{ report: CompanyTokenUsageReport | null; error?: string }> {
+  try {
+    const user = await requireUser();
+    requireRole(user, 'owner', 'admin');
+
+    const client = getClient();
+
+    const { start: cmStart, end: cmEnd } = getMonthRange(0);
+    const { start: pmStart, end: pmEnd } = getMonthRange(-1);
+
+    const { data: tickets, error } = await client
+      .from('tickets')
+      .select('id, title, created_at, ai_token_usage')
+      .eq('company_id', companyId)
+      .gte('created_at', pmStart)
+      .not('ai_token_usage', 'is', null);
+
+    if (error) return { report: null, error: error.message };
+
+    const currentMonthTickets = tickets?.filter((t) => t.created_at >= cmStart && t.created_at <= cmEnd) || [];
+    const previousMonthTickets = tickets?.filter((t) => t.created_at >= pmStart && t.created_at <= pmEnd) || [];
+
+    // Aggregate current month
+    const total = { promptTokens: 0, candidatesTokens: 0, totalTokens: 0 };
+    const triage = { promptTokens: 0, candidatesTokens: 0, totalTokens: 0 };
+    const context = { promptTokens: 0, candidatesTokens: 0, totalTokens: 0 };
+    const response = { promptTokens: 0, candidatesTokens: 0, totalTokens: 0 };
+    const dailyMap = new Map<string, { totalTokens: number; ticketCount: number }>();
+
+    for (const t of currentMonthTickets) {
+      const u = t.ai_token_usage as TokenUsage | null;
+      if (!u) continue;
+      sumTokens(u.total, total);
+      sumTokens(u.triage, triage);
+      sumTokens(u.context, context);
+      sumTokens(u.response, response);
+
+      const day = t.created_at.slice(0, 10);
+      const entry = dailyMap.get(day) || { totalTokens: 0, ticketCount: 0 };
+      entry.totalTokens += u.total.totalTokens;
+      entry.ticketCount += 1;
+      dailyMap.set(day, entry);
+    }
+
+    // Fill missing days with zero
+    const cmStartDate = new Date(cmStart);
+    const cmEndDate = new Date(cmEnd);
+    const dailyUsage: DailyTokenUsage[] = [];
+    for (let d = new Date(cmStartDate); d <= cmEndDate; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      const entry = dailyMap.get(key);
+      dailyUsage.push({
+        date: key,
+        totalTokens: entry?.totalTokens ?? 0,
+        ticketCount: entry?.ticketCount ?? 0,
+      });
+    }
+
+    // Previous month totals
+    let previousMonthTotal = 0;
+    for (const t of previousMonthTickets) {
+      const u = t.ai_token_usage as TokenUsage | null;
+      if (u?.total?.totalTokens) previousMonthTotal += u.total.totalTokens;
+    }
+
+    // Recent tickets with AI
+    const recentTickets = currentMonthTickets
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, 10)
+      .map((t) => {
+        const u = t.ai_token_usage as TokenUsage | null;
+        return {
+          id: t.id,
+          title: t.title,
+          created_at: t.created_at,
+          totalTokens: u?.total?.totalTokens ?? 0,
+        };
+      });
+
+    const report: CompanyTokenUsageReport = {
+      currentMonth: {
+        total: { promptTokens: total.promptTokens, candidatesTokens: total.candidatesTokens, totalTokens: total.totalTokens },
+        triage: { promptTokens: triage.promptTokens, candidatesTokens: triage.candidatesTokens, totalTokens: triage.totalTokens },
+        context: { promptTokens: context.promptTokens, candidatesTokens: context.candidatesTokens, totalTokens: context.totalTokens },
+        response: { promptTokens: response.promptTokens, candidatesTokens: response.candidatesTokens, totalTokens: response.totalTokens },
+        ticketCount: currentMonthTickets.length,
+      },
+      previousMonthTotal,
+      previousMonthTicketCount: previousMonthTickets.length,
+      dailyUsage,
+      recentTickets,
+    };
+
+    return { report };
+  } catch (err) {
+    return { report: null, error: err instanceof Error ? err.message : 'Error desconocido' };
   }
 }
 
