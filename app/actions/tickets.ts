@@ -392,6 +392,29 @@ export async function getCompanyById(companyId: string) {
   }
 }
 
+export async function updateCompanyName(prevState: { error?: string; success?: boolean; name?: string }, formData: FormData) {
+  try {
+    const user = await requireUser();
+    const role = user.user_metadata?.role;
+    if (role !== 'owner') return { error: 'Solo el dueño puede cambiar el nombre de la empresa' };
+
+    const companyId = user.user_metadata?.company_id as string;
+    const name = formData.get('name') as string;
+    if (!name || name.trim().length < 2) return { error: 'El nombre debe tener al menos 2 caracteres' };
+
+    const client = getClient();
+    const { error } = await client
+      .from('companies')
+      .update({ name: name.trim() })
+      .eq('id', companyId);
+
+    if (error) return { error: error.message };
+    return { success: true, name: name.trim() };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Error desconocido' };
+  }
+}
+
 export async function getAgents(companyId: string) {
   try {
     const client = getClient();
