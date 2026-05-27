@@ -13,6 +13,7 @@ import {
   Clock,
   Shield,
   UserCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import { TicketReply } from '@/components/ticket-reply';
 import { PrioritySelector } from '@/components/priority-selector';
@@ -156,20 +157,34 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               <BrainCircuit className="h-3.5 w-3.5" />
               Análisis IA
             </h2>
-            <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 p-4">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-medium text-amber-600 shadow-xs">
-                  <span className={`h-1.5 w-1.5 rounded-full ${ticket.ai_context.is_recurring_issue ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                  {ticket.ai_context.is_recurring_issue ? 'Reincidente' : 'No reincidente'}
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-medium text-amber-600 shadow-xs">
-                  {ticket.ai_context.customer_sentiment?.replace(/_/g, ' ')}
-                </span>
+            {(ticket.ai_context as Record<string, unknown>)?.error || ticket.ai_context.historical_summary?.startsWith('IA no disponible') ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800">IA no disponible</p>
+                    <p className="mt-1 text-sm text-amber-700/70">
+                      El servicio de IA no estaba disponible al procesar este ticket. Revise y asigne la prioridad/categoría manualmente.
+                    </p>
+                  </div>
+                </div>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-amber-900/70">
-                {ticket.ai_context.historical_summary}
-              </p>
-            </div>
+            ) : (
+              <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 p-4">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-medium text-amber-600 shadow-xs">
+                    <span className={`h-1.5 w-1.5 rounded-full ${ticket.ai_context.is_recurring_issue ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                    {ticket.ai_context.is_recurring_issue ? 'Reincidente' : 'No reincidente'}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-medium text-amber-600 shadow-xs">
+                    {ticket.ai_context.customer_sentiment?.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-amber-900/70">
+                  {ticket.ai_context.historical_summary}
+                </p>
+              </div>
+            )}
           </div>
         )}
 

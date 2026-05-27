@@ -3,6 +3,7 @@
 import { headers } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createServerSupabase } from '@/lib/supabase-server';
+import { fireOutboundWebhook } from '@/lib/webhook-outbound';
 import type { TicketData, ReplyState } from '@/lib/types';
 import {
   CreateTicketSchema,
@@ -381,7 +382,7 @@ export async function getCompanyById(companyId: string) {
     const client = getClient();
     const { data, error } = await client
       .from('companies')
-      .select('id, name, slug')
+      .select('id, name, slug, webhook_url')
       .eq('id', companyId)
       .single();
 
@@ -392,15 +393,15 @@ export async function getCompanyById(companyId: string) {
   }
 }
 
-export async function updateCompanyName(prevState: { error?: string; success?: boolean; name?: string }, formData: FormData) {
+export async function updateCompanyName(formData: FormData) {
   try {
     const user = await requireUser();
     const role = user.user_metadata?.role;
-    if (role !== 'owner') return { error: 'Solo el dueño puede cambiar el nombre de la empresa' };
+    if (role !== 'owner') throw new Error('Solo el dueño puede cambiar el nombre de la empresa');
 
     const companyId = user.user_metadata?.company_id as string;
     const name = formData.get('name') as string;
-    if (!name || name.trim().length < 2) return { error: 'El nombre debe tener al menos 2 caracteres' };
+    if (!name || name.trim().length < 2) throw new Error('El nombre debe tener al menos 2 caracteres');
 
     const client = getClient();
     const { error } = await client
@@ -408,10 +409,40 @@ export async function updateCompanyName(prevState: { error?: string; success?: b
       .update({ name: name.trim() })
       .eq('id', companyId);
 
-    if (error) return { error: error.message };
-    return { success: true, name: name.trim() };
+    if (error) throw new Error(error.message);
+
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath('/profile');
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error desconocido' };
+    console.error('Error al actualizar nombre:', err);
+    const { redirect } = await import('next/navigation');
+    redirect(`/profile?error=${encodeURIComponent(err instanceof Error ? err.message : 'Error desconocido')}`);
+  }
+}
+
+export async function updateCompanyWebhook(formData: FormData) {
+  try {
+    const user = await requireUser();
+    const role = user.user_metadata?.role;
+    if (role !== 'owner') throw new Error('Solo el dueño puede configurar el webhook');
+
+    const companyId = user.user_metadata?.company_id as string;
+    const webhookUrl = formData.get('webhook_url') as string;
+
+    const client = getClient();
+    const { error } = await client
+      .from('companies')
+      .update({ webhook_url: webhookUrl?.trim() || null })
+      .eq('id', companyId);
+
+    if (error) throw new Error(error.message);
+
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath('/profile');
+  } catch (err) {
+    console.error('Error al actualizar webhook:', err);
+    const { redirect } = await import('next/navigation');
+    redirect(`/profile?error=${encodeURIComponent(err instanceof Error ? err.message : 'Error desconocido')}`);
   }
 }
 
@@ -676,6 +707,31 @@ export async function sendReply(prevState: ReplyState, formData: FormData) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', ticketId);
+
+    // Fire outbound webhook (fire-and-forget)
+    const { data: ticketWithCompany } = await client
+      .from('tickets')
+      .select('company_id, title, user_name, email')
+      .eq('id', ticketId)
+      .single();
+
+    if (ticketWithCompany) {
+      fireOutboundWebhook(ticketWithCompany.company_id, {
+        event: 'ticket.resolved',
+        company: '',
+        ticket: {
+          id: ticketId,
+          title: ticketWithCompany.title,
+          user_name: ticketWithCompany.user_name,
+          user_email: ticketWithCompany.email,
+        },
+        reply: {
+          body,
+          author_name: agentName,
+        },
+        resolved_at: new Date().toISOString(),
+      });
+    }
 
     return { success: true, error: '' };
   } catch (err) {
