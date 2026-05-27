@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createServerSupabase } from '@/lib/supabase-server';
 import { fireOutboundWebhook } from '@/lib/webhook-outbound';
+import { sendEmail, buildTicketResolvedEmail } from '@/lib/email';
 import type { TicketData, ReplyState } from '@/lib/types';
 import {
   CreateTicketSchema,
@@ -745,6 +746,44 @@ export async function sendReply(prevState: ReplyState, formData: FormData) {
         },
         resolved_at: new Date().toISOString(),
       });
+
+      // Send email to customer (fire-and-forget via Resend)
+      if (ticketWithCompany.email) {
+        const companyName = ticketWithCompany.company_id
+          ? (await client.from('companies').select('name').eq('id', ticketWithCompany.company_id).single()).data?.name
+          : null;
+
+        const { subject, html } = buildTicketResolvedEmail({
+          user_name: ticketWithCompany.user_name,
+          ticket_title: ticketWithCompany.title,
+          reply_body: body,
+          agent_name: agentName,
+          company_name: companyName,
+        });
+
+        sendEmail({ to: ticketWithCompany.email, subject, html });
+      }
+
+      // Fire internal n8n webhook (todas las resoluciones, sin importar la empresa)
+      const n8nUrl = process.env.INTERNAL_WEBHOOK_URL;
+      if (n8nUrl) {
+        fetch(n8nUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'ticket.resolved',
+            company_id: ticketWithCompany.company_id,
+            ticket: {
+              id: ticketId,
+              title: ticketWithCompany.title,
+              user_name: ticketWithCompany.user_name,
+              user_email: ticketWithCompany.email,
+            },
+            reply: { body, author_name: agentName },
+            resolved_at: new Date().toISOString(),
+          }),
+        }).catch((err) => console.error('Error al enviar a n8n:', err));
+      }
     }
 
     return { success: true, error: '' };
