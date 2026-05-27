@@ -18,7 +18,7 @@ export type {
   InvitationData,
 };
 
-export type { AiContext } from './schemas';
+export type { AiContext, TokenUsage } from './schemas';
 
 export type TicketFormState = { error: string; ticket: TicketData | null; rateLimit?: { remaining: number; resetMinutes: number } };
 export type ReplyState = { error: string; success: boolean };

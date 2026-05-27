@@ -24,7 +24,13 @@ export default function LoginPage() {
     });
 
     if (authError) {
-      setError(authError.message);
+      if (authError.message?.includes('Failed to fetch') || authError.message?.includes('NetworkError') || authError.message?.includes('net::')) {
+        setError('No se pudo conectar con el servidor de autenticación. Verifica tu conexión a internet.');
+      } else if (authError.message?.includes('Invalid login credentials')) {
+        setError('Correo o contraseña incorrectos');
+      } else {
+        setError(authError.message);
+      }
       setLoading(false);
       return;
     }

@@ -3,21 +3,21 @@ import { z } from 'zod';
 // ─── Form input schemas ───
 
 export const CreateTicketSchema = z.object({
-  title: z.string().min(1, 'El título es requerido').max(500),
-  description: z.string().min(1, 'La descripción es requerida').max(5000),
-  company_id: z.string().optional(),
+  title: z.string().trim().min(1, 'El título es requerido').max(500, 'El título no puede exceder 500 caracteres'),
+  description: z.string().trim().min(1, 'La descripción es requerida').max(5000, 'La descripción no puede exceder 5000 caracteres'),
+  company_id: z.string().min(1, 'La empresa es requerida'),
   user_id: z.string().optional(),
-  user_name: z.string().optional(),
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  user_name: z.string().trim().min(1, 'El nombre es requerido').max(200).optional(),
+  email: z.string().trim().email('Correo electrónico inválido').optional().or(z.literal('')),
 });
 
 export const RegisterCompanySchema = z.object({
-  company_name: z.string().min(1, 'El nombre de empresa es requerido').max(200),
-  slug: z.string().min(2, 'El slug debe tener al menos 2 caracteres').max(50)
+  company_name: z.string().trim().min(1, 'El nombre de empresa es requerido').max(200, 'El nombre no puede exceder 200 caracteres'),
+  slug: z.string().trim().min(2, 'La dirección debe tener al menos 2 caracteres').max(50, 'La dirección no puede exceder 50 caracteres')
     .regex(/^[a-z0-9-]+$/, 'Solo minúsculas, números y guiones'),
-  email: z.string().email('Email inválido'),
+  email: z.string().trim().email('Correo electrónico inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  full_name: z.string().min(1, 'El nombre es requerido').max(200),
+  full_name: z.string().trim().min(1, 'El nombre es requerido').max(200, 'El nombre no puede exceder 200 caracteres'),
 });
 
 export const AcceptInvitationSchema = z.object({
@@ -26,15 +26,15 @@ export const AcceptInvitationSchema = z.object({
 });
 
 export const CreateInvitationSchema = z.object({
-  company_id: z.string().min(1),
-  email: z.string().email('Email inválido'),
-  full_name: z.string().min(1, 'El nombre es requerido').max(200),
+  company_id: z.string().min(1, 'La empresa es requerida'),
+  email: z.string().trim().email('Correo electrónico inválido'),
+  full_name: z.string().trim().min(1, 'El nombre es requerido').max(200, 'El nombre no puede exceder 200 caracteres'),
   role: z.enum(['admin', 'agent']),
 });
 
 export const SendReplySchema = z.object({
-  ticket_id: z.string().min(1),
-  body: z.string().min(1, 'La respuesta no puede estar vacía').max(10000),
+  ticket_id: z.string().min(1, 'ID de ticket requerido'),
+  body: z.string().trim().min(1, 'La respuesta no puede estar vacía').max(10000, 'La respuesta no puede exceder 10000 caracteres'),
   user_id: z.string().optional(),
   author_name: z.string().optional(),
 });
@@ -62,6 +62,15 @@ export const AiContextSchema = z.object({
 
 export type AiContext = z.infer<typeof AiContextSchema>;
 
+export const TokenUsageSchema = z.object({
+  triage: z.object({ promptTokens: z.number(), candidatesTokens: z.number(), totalTokens: z.number() }),
+  context: z.object({ promptTokens: z.number(), candidatesTokens: z.number(), totalTokens: z.number() }),
+  response: z.object({ promptTokens: z.number(), candidatesTokens: z.number(), totalTokens: z.number() }),
+  total: z.object({ promptTokens: z.number(), candidatesTokens: z.number(), totalTokens: z.number() }),
+});
+
+export type TokenUsage = z.infer<typeof TokenUsageSchema>;
+
 export const TicketFullSchema = TicketSchema.extend({
   company_id: z.string(),
   user_id: z.string().nullable(),
@@ -70,6 +79,7 @@ export const TicketFullSchema = TicketSchema.extend({
   email: z.string().nullable(),
   ai_context: AiContextSchema.nullable(),
   ai_suggested_response: z.string().nullable(),
+  ai_token_usage: TokenUsageSchema.nullable(),
   resolution: z.string().nullable(),
   assigned_to: z.string().nullable(),
   resolved_by_name: z.string().nullable(),

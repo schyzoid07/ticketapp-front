@@ -129,6 +129,14 @@ export async function createTicket(prevState: { error: string; ticket: TicketDat
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
     console.error('Error al crear ticket:', message);
+
+    if (message.includes('Failed to fetch') || message.includes('fetch') || message.includes('NetworkError') || message.includes('net::')) {
+      return { error: 'No se pudo conectar con el servidor. Verifica tu conexión a internet e intenta de nuevo.', ticket: null };
+    }
+    if (message.includes('Invalid API key') || message.includes('API key')) {
+      return { error: 'Error de configuración del servidor. Contacta al administrador.', ticket: null };
+    }
+
     return { error: message, ticket: null };
   }
 }
@@ -227,6 +235,12 @@ export async function registerCompany(prevState: { error: string; success: boole
     return { error: '', success: true, slug: company.slug, companyName: company.name };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
+    if (message.includes('Failed to fetch') || message.includes('NetworkError') || message.includes('net::')) {
+      return { error: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.', success: false };
+    }
+    if (message.includes('Email already registered') || message.includes('already registered')) {
+      return { error: 'Este correo electrónico ya está registrado. Inicia sesión o usa otro correo.', success: false };
+    }
     return { error: message, success: false };
   }
 }
@@ -736,6 +750,9 @@ export async function sendReply(prevState: ReplyState, formData: FormData) {
     return { success: true, error: '' };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
+    if (message.includes('Failed to fetch') || message.includes('NetworkError') || message.includes('net::')) {
+      return { error: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.', success: false };
+    }
     return { error: message, success: false };
   }
 }

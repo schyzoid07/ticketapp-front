@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabase } from '@/lib/supabase-server';
+import { AlertTriangle } from 'lucide-react';
 import { getCompanyById, updateCompanyName, updateCompanyWebhook } from '@/app/actions/tickets';
 import { CopyButton } from '@/components/copy-button';
 import {
