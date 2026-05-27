@@ -72,6 +72,7 @@ export const TicketFullSchema = TicketSchema.extend({
   ai_suggested_response: z.string().nullable(),
   resolution: z.string().nullable(),
   assigned_to: z.string().nullable(),
+  resolved_by_name: z.string().nullable(),
   updated_at: z.string(),
 });
 

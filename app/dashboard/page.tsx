@@ -24,7 +24,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<Reco
     status: searchParams?.status,
     from: searchParams?.from,
     to: searchParams?.to,
-    assigned_to: searchParams?.assigned_to,
+    assigned_to: searchParams?.assigned_to || undefined,
   };
 
   const [{ tickets }, { company }, { agents }] = await Promise.all([

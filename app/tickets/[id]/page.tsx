@@ -219,6 +219,11 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
               Resolución
             </h2>
+            {ticket.resolved_by_name && (
+              <p className="mb-2 text-xs text-gray-400">
+                Resuelto por: <span className="font-medium text-gray-600">{ticket.resolved_by_name}</span>
+              </p>
+            )}
             <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-green-50 p-4">
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-emerald-900/70">
                 {ticket.resolution}

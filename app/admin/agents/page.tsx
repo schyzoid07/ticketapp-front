@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabase } from '@/lib/supabase-server';
 import type { AgentUser } from '@/lib/types';
-import { getAgents, getAgentResolvedCount } from '@/app/actions/tickets';
-import { Users, Shield, Wrench, TicketCheck, ArrowLeft, UserPlus, Crown } from 'lucide-react';
+import { getAgents, getAgentResolvedCount, getAgentPendingCount } from '@/app/actions/tickets';
+import { Users, Shield, Wrench, TicketCheck, ArrowLeft, UserPlus, Crown, Clock } from 'lucide-react';
 import { InviteAgentForm } from '@/components/invite-agent-form';
 
 export default async function AdminAgentsPage() {
@@ -19,10 +19,15 @@ export default async function AdminAgentsPage() {
   const { agents } = await getAgents(companyId);
 
   const resolvedCounts: Record<string, number> = {};
+  const pendingCounts: Record<string, number> = {};
   for (const agent of agents) {
     if (agent.role !== 'owner') {
-      const { count } = await getAgentResolvedCount(agent.id);
-      resolvedCounts[agent.id] = count;
+      const [{ count: resolved }, { count: pending }] = await Promise.all([
+        getAgentResolvedCount(agent.id),
+        getAgentPendingCount(agent.id),
+      ]);
+      resolvedCounts[agent.id] = resolved;
+      pendingCounts[agent.id] = pending;
     }
   }
 
@@ -57,10 +62,12 @@ export default async function AdminAgentsPage() {
         {agents.map((agent: AgentUser) => {
           const cfg = roleConfig[agent.role] || roleConfig.agent;
           const Icon = cfg.icon;
+          const isOwner = agent.role === 'owner';
           return (
-            <div
+            <a
               key={agent.id}
-              className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 shadow-xs"
+              href={isOwner ? '/admin/agents' : `/dashboard?assigned_to=${agent.id}`}
+              className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 shadow-xs transition-all hover:border-amber-200 hover:shadow-md"
             >
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${cfg.style}`}>
                 <Icon className="h-5 w-5" />
@@ -74,14 +81,21 @@ export default async function AdminAgentsPage() {
                 </div>
                 <p className="mt-0.5 text-xs text-gray-400">{agent.email}</p>
               </div>
-              {agent.role !== 'owner' && (
-                <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <TicketCheck className="h-3.5 w-3.5" />
-                  <span className="font-medium tabular-nums">{resolvedCounts[agent.id] ?? 0}</span>
-                  <span className="text-gray-400">resueltos</span>
+              {!isOwner && (
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5 text-amber-500" />
+                    <span className="font-medium tabular-nums">{pendingCounts[agent.id] ?? 0}</span>
+                    <span className="text-gray-400">pendientes</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <TicketCheck className="h-3.5 w-3.5 text-emerald-500" />
+                    <span className="font-medium tabular-nums">{resolvedCounts[agent.id] ?? 0}</span>
+                    <span className="text-gray-400">resueltos</span>
+                  </span>
                 </div>
               )}
-            </div>
+            </a>
           );
         })}
       </div>

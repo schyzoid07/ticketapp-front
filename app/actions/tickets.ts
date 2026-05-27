@@ -413,9 +413,10 @@ export async function getAgentResolvedCount(agentUserId: string) {
   try {
     const client = getClient();
     const { count, error } = await client
-      .from('ticket_replies')
+      .from('tickets')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', agentUserId);
+      .eq('assigned_to', agentUserId)
+      .in('status', ['RESOLVED', 'CLOSED']);
 
     if (error) return { count: 0 };
     return { count: count ?? 0 };
@@ -424,19 +425,19 @@ export async function getAgentResolvedCount(agentUserId: string) {
   }
 }
 
-export async function getAgentResolvedTickets(agentUserId: string) {
+export async function getAgentPendingCount(agentUserId: string) {
   try {
     const client = getClient();
-    const { data, error } = await client
-      .from('ticket_replies')
-      .select('id, ticket_id, created_at, body')
-      .eq('user_id', agentUserId)
-      .order('created_at', { ascending: false });
+    const { count, error } = await client
+      .from('tickets')
+      .select('id', { count: 'exact', head: true })
+      .eq('assigned_to', agentUserId)
+      .in('status', ['OPEN', 'IN_PROGRESS', 'PENDING_TRIAGE']);
 
-    if (error) return { replies: [] };
-    return { replies: data };
+    if (error) return { count: 0 };
+    return { count: count ?? 0 };
   } catch {
-    return { replies: [] };
+    return { count: 0 };
   }
 }
 
@@ -568,13 +569,25 @@ export async function getTicket(id: string) {
       return { error: error.message };
     }
 
+    let agentName: string | null = null;
+    if (data.assigned_to) {
+      const { data: agentUser } = await client
+        .from('users')
+        .select('full_name, email')
+        .eq('id', data.assigned_to)
+        .single();
+      if (agentUser) {
+        agentName = agentUser.full_name || agentUser.email?.split('@')[0] || null;
+      }
+    }
+
     const { data: replies, error: repliesError } = await client
       .from('ticket_replies')
       .select('*')
       .eq('ticket_id', id)
       .order('created_at', { ascending: true });
 
-    return { ticket: data, replies: replies || [] };
+    return { ticket: { ...data, resolved_by_name: agentName }, replies: replies || [] };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
     console.error('Error al obtener ticket:', message);
