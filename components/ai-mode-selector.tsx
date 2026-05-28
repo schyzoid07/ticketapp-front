@@ -112,7 +112,14 @@ export function AIModeSelector({ ticketId, currentMode, userRole }: Props) {
         </div>
       )}
 
-      {error && <p className="text-[10px] text-red-500">{error}</p>}
+      {error && (
+        <p className="text-[10px] text-red-500">
+          {error === 'No autenticado' ? 'Debe iniciar sesión' :
+           error === 'Sesión no encontrada' ? 'Sesión expirada, recargue la página' :
+           error.includes('Failed to fetch') ? 'Error de conexión con el servidor de IA' :
+           error}
+        </p>
+      )}
     </div>
   );
 }

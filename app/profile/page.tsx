@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabase } from '@/lib/supabase-server';
-import { AlertTriangle } from 'lucide-react';
-import { getCompanyById, updateCompanyName, updateCompanyWebhook } from '@/app/actions/tickets';
+import { getCompanyById, updateCompanyName, updateCompanyWebhook, checkUserBlocked } from '@/app/actions/tickets';
 import { CopyButton } from '@/components/copy-button';
+import { ChangePasswordForm } from '@/components/change-password-form';
 import {
   User,
   Building2,
@@ -14,6 +14,9 @@ import {
   ArrowLeft,
   Webhook,
   ExternalLink,
+  KeyRound,
+  AlertTriangle,
+  Ban,
 } from 'lucide-react';
 
 const roleLabels: Record<string, { label: string; icon: typeof Crown; color: string }> = {
@@ -30,6 +33,9 @@ export default async function ProfilePage() {
   const companyId = user.user_metadata?.company_id as string;
   const role = user.user_metadata?.role as string;
   const isOwner = role === 'owner';
+  const isAgent = role === 'agent';
+
+  const isBlocked = isAgent ? await checkUserBlocked(user.id) : false;
 
   const { company } = await getCompanyById(companyId);
   const roleMeta = roleLabels[role] || roleLabels.agent;
@@ -50,6 +56,20 @@ export default async function ProfilePage() {
         Volver al dashboard
       </a>
 
+      {isBlocked && (
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-6">
+          <div className="flex items-start gap-3">
+            <Ban className="mt-0.5 h-6 w-6 shrink-0 text-red-500" />
+            <div>
+              <p className="text-lg font-bold text-red-800">Su usuario ha sido bloqueado</p>
+              <p className="mt-1 text-sm text-red-700/70">
+                Un administrador ha bloqueado su cuenta. No puede tomar ni responder tickets hasta que un administrador lo desbloquee.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
         {/* Header */}
         <div className="border-b border-border bg-gradient-to-br from-muted to-surface p-6">
@@ -65,6 +85,12 @@ export default async function ProfilePage() {
                   {roleMeta.label}
                 </span>
                 <span className="text-xs text-gray-400">{user.email}</span>
+                {isBlocked && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600">
+                    <Ban className="h-3 w-3" />
+                    Bloqueado
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -138,7 +164,7 @@ export default async function ProfilePage() {
 
         {/* Outbound Webhook (Owner only) */}
         {isOwner && (
-          <div className="p-6">
+          <div className="border-b border-border p-6">
             <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
               <Webhook className="h-3.5 w-3.5" />
               Webhook de salida
@@ -170,6 +196,15 @@ export default async function ProfilePage() {
             </div>
           </div>
         )}
+
+        {/* Change Password (all roles) */}
+        <div className="p-6">
+          <h2 className="mb-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+            <KeyRound className="h-3.5 w-3.5" />
+            Cambiar contraseña
+          </h2>
+          <ChangePasswordForm />
+        </div>
       </div>
     </div>
   );

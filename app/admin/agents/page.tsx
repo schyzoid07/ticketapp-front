@@ -4,6 +4,7 @@ import type { AgentUser } from '@/lib/types';
 import { getAgents, getAgentResolvedCount, getAgentPendingCount } from '@/app/actions/tickets';
 import { Users, Shield, Wrench, TicketCheck, ArrowLeft, UserPlus, Crown, Clock } from 'lucide-react';
 import { InviteAgentForm } from '@/components/invite-agent-form';
+import { ToggleAgentBlock } from '@/components/toggle-agent-block';
 
 export default async function AdminAgentsPage() {
   const supabase = await createServerSupabase();
@@ -83,6 +84,11 @@ export default async function AdminAgentsPage() {
               </div>
               {!isOwner && (
                 <div className="flex items-center gap-3 text-xs text-gray-500">
+                  {agent.blocked && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">
+                      Bloqueado
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1">
                     <Clock className="h-3.5 w-3.5 text-amber-500" />
                     <span className="font-medium tabular-nums">{pendingCounts[agent.id] ?? 0}</span>
@@ -93,6 +99,9 @@ export default async function AdminAgentsPage() {
                     <span className="font-medium tabular-nums">{resolvedCounts[agent.id] ?? 0}</span>
                     <span className="text-gray-400">resueltos</span>
                   </span>
+                  {agent.role !== 'owner' && (
+                    <ToggleAgentBlock agentId={agent.id} blocked={agent.blocked ?? false} />
+                  )}
                 </div>
               )}
             </a>

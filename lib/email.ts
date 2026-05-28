@@ -8,27 +8,43 @@ interface SendEmailParams {
   html: string;
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export async function sendEmail({ to, subject, html }: SendEmailParams): Promise<void> {
   if (!RESEND_API_KEY) {
     console.warn('RESEND_API_KEY no configurada — omitiendo email');
     return;
   }
 
-  fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      from: `${FROM_NAME} <${FROM_EMAIL}>`,
-      to: [to],
-      subject,
-      html,
-    }),
-  }).catch((err) => {
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        to: [to],
+        subject,
+        html,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      console.error(`Resend respondió con ${response.status}: ${body}`);
+    }
+  } catch (err) {
     console.error('Error al enviar email vía Resend:', err);
-  });
+  }
 }
 
 export function buildTicketResolvedEmail(params: {
@@ -48,6 +64,10 @@ export function buildTicketResolvedEmail(params: {
 
   const subject = `Ticket resuelto: ${params.ticket_title}`;
 
+  const escapedTitle = escapeHtml(params.ticket_title);
+  const escapedAgent = escapeHtml(params.agent_name);
+  const escapedReply = escapeHtml(params.reply_body);
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -65,10 +85,10 @@ export function buildTicketResolvedEmail(params: {
           <tr>
             <td style="padding: 24px;">
               <p style="font-size: 14px; color: #292524; margin: 0 0 16px 0;">${salutation},</p>
-              <p style="font-size: 14px; color: #292524; margin: 0 0 16px 0;">Su ticket ha sido resuelto por <strong>${params.agent_name}</strong>${companyLine}:</p>
+              <p style="font-size: 14px; color: #292524; margin: 0 0 16px 0;">Su ticket ha sido resuelto por <strong>${escapedAgent}</strong>${companyLine}:</p>
               <div style="background: #f5f5f4; border-radius: 8px; padding: 16px; margin: 0 0 16px 0;">
-                <p style="font-size: 12px; color: #78716c; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em;">${params.ticket_title}</p>
-                <p style="font-size: 14px; color: #292524; margin: 0; white-space: pre-wrap; line-height: 1.5;">${params.reply_body}</p>
+                <p style="font-size: 12px; color: #78716c; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em;">${escapedTitle}</p>
+                <p style="font-size: 14px; color: #292524; margin: 0; white-space: pre-wrap; line-height: 1.5;">${escapedReply}</p>
               </div>
               <p style="font-size: 13px; color: #78716c; margin: 0;">Si tiene alguna duda, responda a este correo o contacte nuevamente a nuestro equipo de soporte.</p>
             </td>

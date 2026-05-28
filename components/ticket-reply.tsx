@@ -102,7 +102,11 @@ export function TicketReply({
           </div>
 
           {state.error && (
-            <p className="text-sm text-red-500">{state.error}</p>
+            <p className="text-sm text-red-500">
+              {state.error === 'No autenticado' ? 'Debe iniciar sesión para responder' :
+               state.error.includes('Failed to fetch') ? 'No se pudo conectar con el servidor. Verifique su conexión.' :
+               state.error}
+            </p>
           )}
 
           <button

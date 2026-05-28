@@ -31,6 +31,15 @@ export const CreateInvitationSchema = z.object({
   role: z.enum(['admin', 'agent']),
 });
 
+export const ChangePasswordSchema = z.object({
+  current_password: z.string().min(1, 'La contraseña actual es requerida'),
+  new_password: z.string().min(6, 'La nueva contraseña debe tener al menos 6 caracteres'),
+  confirm_password: z.string().min(1, 'Debe confirmar la nueva contraseña'),
+}).refine((data) => data.new_password === data.confirm_password, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirm_password'],
+});
+
 export const SendReplySchema = z.object({
   ticket_id: z.string().min(1, 'ID de ticket requerido'),
   body: z.string().trim().min(1, 'La respuesta no puede estar vacía').max(10000, 'La respuesta no puede exceder 10000 caracteres'),
@@ -169,6 +178,7 @@ export const AgentUserSchema = z.object({
   full_name: z.string().nullable(),
   role: z.string(),
   created_at: z.string(),
+  blocked: z.boolean().nullable().default(false),
 });
 
 export type AgentUser = z.infer<typeof AgentUserSchema>;

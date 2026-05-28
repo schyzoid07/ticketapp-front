@@ -49,10 +49,16 @@ export default async function AdminTokensPage() {
   const { report, error } = await getCompanyTokenUsage(companyId);
 
   if (error || !report) {
+    const friendlyMessage =
+      !error ? 'No hay datos de tokens este mes' :
+      error.includes('No autenticado') ? 'Debe iniciar sesión para ver las estadísticas' :
+      error.includes('No autorizado') || error.includes('Se requiere rol') ? 'No tienes permisos para ver esta página' :
+      error.includes('Failed to fetch') ? 'No se pudo conectar con el servidor' :
+      `Error al cargar las estadísticas`;
     return (
       <div className="mx-auto w-full max-w-4xl px-4 py-12">
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-          Error al cargar estadísticas: {error || 'No hay datos'}
+          {friendlyMessage}
         </div>
       </div>
     );

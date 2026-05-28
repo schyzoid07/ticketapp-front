@@ -37,7 +37,11 @@ export function ClaimButton({ ticketId }: { ticketId: string }) {
         Tomar ticket
       </button>
       {state.error && (
-        <p className="mt-2 text-sm text-red-500">{state.error}</p>
+        <p className="mt-2 text-sm text-red-500">
+          {state.error === 'No autenticado' ? 'Debe iniciar sesión' :
+           state.error.includes('Failed to fetch') ? 'Error de conexión' :
+           state.error}
+        </p>
       )}
     </form>
   );

@@ -132,6 +132,35 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
           </div>
         </div>
 
+        {/* Limit warnings */}
+        {ticket.tags?.includes('rate-limit-exceeded') && (
+          <div className="border-b border-border bg-red-50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+              <div>
+                <p className="text-sm font-medium text-red-800">Límite de procesamiento excedido</p>
+                <p className="mt-1 text-xs text-red-700/70">
+                  Este ticket se creó cuando el límite de procesamiento de IA estaba excedido. No se ejecutó el análisis automático. Asigne la prioridad y categoría manualmente.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {ticket.tags?.includes('token-limit-exceeded') && (
+          <div className="border-b border-border bg-red-50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+              <div>
+                <p className="text-sm font-medium text-red-800">Límite mensual de tokens alcanzado</p>
+                <p className="mt-1 text-xs text-red-700/70">
+                  Su empresa ha alcanzado el límite mensual de tokens de IA. Este ticket no se procesó automáticamente. Los tickets se reanudarán el próximo mes.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Description */}
         <div className="border-b border-border p-6">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Descripción</h2>
@@ -139,24 +168,36 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Tags */}
-        {ticket.tags && ticket.tags.length > 0 && (
-          <div className="border-b border-border p-6">
-            <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
-              <Tag className="h-3.5 w-3.5" />
-              Tags <span className="font-normal normal-case tracking-normal text-gray-400">(generados por IA)</span>
-            </h2>
+        <div className="border-b border-border p-6">
+          <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+            <Tag className="h-3.5 w-3.5" />
+            Tags
+          </h2>
+          {ticket.tags && ticket.tags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {ticket.tags.map((tag: string) => (
-                <span
-                  key={tag}
-                  className="rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 px-3 py-1 text-xs font-medium text-amber-600"
-                >
-                  {tag}
-                </span>
-              ))}
+              {ticket.tags.map((tag: string) => {
+                const isWarning = tag === 'rate-limit-exceeded' || tag === 'token-limit-exceeded' || tag === 'pending-manual';
+                return (
+                  <span
+                    key={tag}
+                    className={`rounded-lg px-3 py-1 text-xs font-medium ${
+                      isWarning
+                        ? 'bg-red-50 text-red-600'
+                        : 'bg-gradient-to-br from-amber-50 to-orange-50 text-amber-600'
+                    }`}
+                  >
+                    {tag === 'rate-limit-exceeded' ? 'Límite de tasa excedido' :
+                     tag === 'token-limit-exceeded' ? 'Límite de tokens excedido' :
+                     tag === 'pending-manual' ? 'Pendiente revisión manual' :
+                     tag}
+                  </span>
+                );
+              })}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-xs text-gray-400">No hay tags disponibles para este ticket</p>
+          )}
+        </div>
 
         {/* AI Context */}
         {ticket.ai_context && (
@@ -197,30 +238,38 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
         )}
 
         {/* AI Suggested Response */}
-        {ticket.ai_suggested_response && ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && (
+        {!isResolved && (
           <div className="border-b border-border p-6">
             <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
               <BrainCircuit className="h-3.5 w-3.5" />
               Respuesta sugerida por IA
             </h2>
-            <div className="max-h-48 overflow-y-auto rounded-xl border border-dashed border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4">
-              <pre className="whitespace-pre-wrap text-sm leading-relaxed text-amber-900/70 font-sans">
-                {ticket.ai_suggested_response}
-              </pre>
-            </div>
+            {ticket.ai_suggested_response ? (
+              <div className="max-h-48 overflow-y-auto rounded-xl border border-dashed border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4">
+                <pre className="whitespace-pre-wrap text-sm leading-relaxed text-amber-900/70 font-sans">
+                  {ticket.ai_suggested_response}
+                </pre>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">
+                <p className="text-sm text-gray-400">
+                  No se pudo generar una sugerencia automática de respuesta. Redacte la respuesta manualmente.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Token Usage */}
-        {tokenUsage && (
-          <div className="border-b border-border p-6">
-            <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
-              <Zap className="h-3.5 w-3.5" />
-              Tokens consumidos (Gemini)
-              <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-normal normal-case tracking-normal text-gray-500">
-                {aiMode === 'minimal' ? 'Solo triaje' : 'Completo'}
-              </span>
-            </h2>
+        <div className="border-b border-border p-6">
+          <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+            <Zap className="h-3.5 w-3.5" />
+            Tokens consumidos (Gemini)
+            <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-normal normal-case tracking-normal text-gray-500">
+              {aiMode === 'minimal' ? 'Solo triaje' : 'Completo'}
+            </span>
+          </h2>
+          {tokenUsage ? (
             <div className="rounded-xl bg-gradient-to-br from-muted to-surface p-4">
               <div className="grid grid-cols-4 gap-2 text-center text-xs">
                 <div className="rounded-lg bg-amber-50 p-2">
@@ -245,8 +294,10 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-xs text-gray-400">No hay datos de tokens para este ticket</p>
+          )}
+        </div>
 
         {/* Token Estimate */}
         <div className="border-b border-border p-6">

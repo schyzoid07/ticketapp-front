@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { createServerSupabase } from '@/lib/supabase-server';
 import { fireOutboundWebhook } from '@/lib/webhook-outbound';
 import { sendEmail, buildTicketResolvedEmail } from '@/lib/email';
-import type { TicketData, ReplyState, TokenUsage, DailyTokenUsage, CompanyTokenUsageReport } from '@/lib/types';
+import type { TicketData, ReplyState, TokenUsage, DailyTokenUsage, CompanyTokenUsageReport, AgentUser } from '@/lib/types';
 import {
   CreateTicketSchema,
   RegisterCompanySchema,
@@ -13,6 +13,7 @@ import {
   CreateInvitationSchema,
   SendReplySchema,
   TicketDataSchema,
+  ChangePasswordSchema,
 } from '@/lib/schemas';
 
 const RATE_LIMIT_MAX = 5;
@@ -563,13 +564,13 @@ export async function getAgents(companyId: string) {
     const client = getClient();
     const { data, error } = await client
       .from('users')
-      .select('id, email, full_name, role, created_at')
+      .select('id, email, full_name, role, created_at, blocked')
       .eq('company_id', companyId)
       .in('role', ['agent', 'admin'])
       .order('created_at', { ascending: false });
 
     if (error) return { agents: [] };
-    return { agents: data };
+    return { agents: data as AgentUser[] };
   } catch {
     return { agents: [] };
   }
@@ -615,6 +616,9 @@ export async function claimTicket(ticketId: string) {
     const userCompanyId = user.user_metadata?.company_id;
     if (role !== 'agent') return { error: 'Solo los agentes pueden tomar tickets', success: false };
 
+    const isBlocked = await checkUserBlocked(userId);
+    if (isBlocked) return { error: 'Su usuario ha sido bloqueado. No puede tomar tickets.', success: false };
+
     const client = getClient();
 
     const { data: ticket } = await client
@@ -642,6 +646,97 @@ export async function claimTicket(ticketId: string) {
     return { success: true, error: '' };
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Error desconocido', success: false };
+  }
+}
+
+export async function checkUserBlocked(userId: string): Promise<boolean> {
+  try {
+    const client = getClient();
+    const { data } = await client
+      .from('users')
+      .select('blocked')
+      .eq('id', userId)
+      .single();
+    return data?.blocked === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function toggleAgentBlock(agentUserId: string) {
+  try {
+    const user = await requireUser();
+    requireRole(user, 'owner', 'admin');
+    const companyId = user.user_metadata?.company_id;
+    if (!companyId) return { error: 'Usuario sin empresa asignada' };
+
+    const client = getClient();
+
+    const { data: targetUser } = await client
+      .from('users')
+      .select('company_id, blocked, role')
+      .eq('id', agentUserId)
+      .single();
+
+    if (!targetUser) return { error: 'Usuario no encontrado' };
+    if (targetUser.company_id !== companyId) return { error: 'No tienes permiso para modificar este usuario' };
+    if (targetUser.role === 'owner') return { error: 'No se puede bloquear al dueño de la empresa' };
+
+    const newBlocked = !targetUser.blocked;
+    const { error } = await client
+      .from('users')
+      .update({ blocked: newBlocked })
+      .eq('id', agentUserId);
+
+    if (error) return { error: error.message };
+
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath('/admin/agents');
+
+    return { success: true, blocked: newBlocked, error: '' };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Error desconocido' };
+  }
+}
+
+export async function changePassword(prevState: { error: string; success: boolean }, formData: FormData) {
+  try {
+    const supabase = await createServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'No autenticado', success: false };
+
+    const parsed = ChangePasswordSchema.safeParse({
+      current_password: formData.get('current_password'),
+      new_password: formData.get('new_password'),
+      confirm_password: formData.get('confirm_password'),
+    });
+
+    if (!parsed.success) {
+      return { error: parsed.error.issues.map((e: { message: string }) => e.message).join(', '), success: false };
+    }
+
+    // Verify current password by trying to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email!,
+      password: parsed.data.current_password,
+    });
+
+    if (signInError) {
+      return { error: 'La contraseña actual no es correcta', success: false };
+    }
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: parsed.data.new_password,
+    });
+
+    if (updateError) {
+      return { error: updateError.message, success: false };
+    }
+
+    return { error: '', success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error desconocido';
+    return { error: message, success: false };
   }
 }
 
@@ -924,6 +1019,11 @@ export async function sendReply(prevState: ReplyState, formData: FormData) {
     const user = await requireUser();
     const userId = user.id;
 
+    if (user.user_metadata?.role === 'agent') {
+      const isBlocked = await checkUserBlocked(userId);
+      if (isBlocked) return { error: 'Su usuario ha sido bloqueado. No puede responder tickets.', success: false };
+    }
+
     const parsed = SendReplySchema.safeParse({
       ticket_id: formData.get('ticket_id'),
       body: formData.get('body'),
@@ -1018,7 +1118,7 @@ export async function sendReply(prevState: ReplyState, formData: FormData) {
           company_name: companyName,
         });
 
-        sendEmail({ to: ticketWithCompany.email, subject, html });
+        await sendEmail({ to: ticketWithCompany.email, subject, html });
       }
 
       // Fire internal n8n webhook (todas las resoluciones, sin importar la empresa)
