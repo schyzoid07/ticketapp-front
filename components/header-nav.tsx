@@ -1,17 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, User, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, User, BarChart3, Crown } from 'lucide-react';
 import { createClient } from '@/lib/supabase-client';
 
 export function HeaderNav() {
   const [showTeam, setShowTeam] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       const role = data.user?.user_metadata?.role;
       setShowTeam(role === 'owner' || role === 'admin');
+      setIsOwner(role === 'owner');
     });
   }, []);
 
@@ -47,6 +49,15 @@ export function HeaderNav() {
         >
           <BarChart3 className="h-4 w-4" />
           Tokens
+        </a>
+      )}
+      {isOwner && (
+        <a
+          href="/admin/plans"
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-700"
+        >
+          <Crown className="h-4 w-4" />
+          Planes
         </a>
       )}
     </>

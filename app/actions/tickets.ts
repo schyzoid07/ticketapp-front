@@ -472,7 +472,7 @@ export async function getCompanyById(companyId: string) {
     const client = getClient();
     const { data, error } = await client
       .from('companies')
-      .select('id, name, slug, webhook_url')
+      .select('id, name, slug, webhook_url, plan')
       .eq('id', companyId)
       .single();
 
@@ -480,6 +480,28 @@ export async function getCompanyById(companyId: string) {
     return { company: data };
   } catch {
     return { company: null };
+  }
+}
+
+export async function getCompanyPlan(companyId: string) {
+  try {
+    const user = await requireUser();
+    const role = user.user_metadata?.role as string;
+    if (role !== 'owner' && role !== 'admin') {
+      return { plan: null, error: 'No autorizado' };
+    }
+
+    const client = getClient();
+    const { data, error } = await client
+      .from('companies')
+      .select('id, name, plan')
+      .eq('id', companyId)
+      .single();
+
+    if (error) return { plan: null, error: error.message };
+    return { plan: data as { id: string; name: string; plan: string } };
+  } catch (err) {
+    return { plan: null, error: err instanceof Error ? err.message : 'Error desconocido' };
   }
 }
 
