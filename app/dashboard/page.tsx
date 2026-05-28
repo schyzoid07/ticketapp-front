@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { LayoutDashboard, Plus } from 'lucide-react';
 import { TicketList } from '@/components/ticket-list';
 import { TicketFilters } from '@/components/ticket-filters';
-import { getTickets, getCompanyById, getCompanyAgents } from '@/app/actions/tickets';
+import { getTickets, getCompanyById, getCompanyAgents, getCompanyTags } from '@/app/actions/tickets';
 import { createServerSupabase } from '@/lib/supabase-server';
 
 export default async function DashboardPage(props: { searchParams?: Promise<Record<string, string>> }) {
@@ -25,12 +25,14 @@ export default async function DashboardPage(props: { searchParams?: Promise<Reco
     from: searchParams?.from,
     to: searchParams?.to,
     assigned_to: searchParams?.assigned_to || undefined,
+    tag: searchParams?.tag || undefined,
   };
 
-  const [{ tickets }, { company }, { agents }] = await Promise.all([
+  const [{ tickets }, { company }, { agents }, { tags }] = await Promise.all([
     getTickets(companyId, filters),
     getCompanyById(companyId),
     isAdmin ? getCompanyAgents(companyId) : Promise.resolve({ agents: [] }),
+    getCompanyTags(companyId),
   ]);
 
   return (
@@ -56,7 +58,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<Reco
 
       <div className="mb-6">
         <Suspense fallback={null}>
-          <TicketFilters userId={userId} userRole={userRole} agents={agents} />
+          <TicketFilters userId={userId} userRole={userRole} agents={agents} tags={tags} />
         </Suspense>
       </div>
 

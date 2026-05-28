@@ -24,10 +24,12 @@ export function TicketFilters({
   userId,
   userRole,
   agents,
+  tags,
 }: {
   userId?: string;
   userRole?: string;
   agents?: { id: string; full_name: string | null; email: string }[];
+  tags?: string[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,6 +39,7 @@ export function TicketFilters({
   const currentAssigned = searchParams.get('assigned_to') || '';
   const currentFrom = searchParams.get('from') || '';
   const currentTo = searchParams.get('to') || '';
+  const currentTag = searchParams.get('tag') || '';
 
   function applyFilter(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -52,7 +55,7 @@ export function TicketFilters({
     router.push('/dashboard');
   }
 
-  const hasFilters = currentPriority || currentStatus || currentAssigned || currentFrom || currentTo;
+  const hasFilters = currentPriority || currentStatus || currentAssigned || currentFrom || currentTo || currentTag;
 
   const isAdmin = userRole === 'owner' || userRole === 'admin';
 
@@ -123,6 +126,19 @@ export function TicketFilters({
             className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
             placeholder="Hasta"
           />
+
+          {tags && tags.length > 0 && (
+            <select
+              value={currentTag}
+              onChange={(e) => applyFilter('tag', e.target.value)}
+              className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-gray-600 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+            >
+              <option value="">Todos los tags</option>
+              {tags.map((tag) => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 

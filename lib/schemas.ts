@@ -26,7 +26,6 @@ export const AcceptInvitationSchema = z.object({
 });
 
 export const CreateInvitationSchema = z.object({
-  company_id: z.string().min(1, 'La empresa es requerida'),
   email: z.string().trim().email('Correo electrónico inválido'),
   full_name: z.string().trim().min(1, 'El nombre es requerido').max(200, 'El nombre no puede exceder 200 caracteres'),
   role: z.enum(['admin', 'agent']),

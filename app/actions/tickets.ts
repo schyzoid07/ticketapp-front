@@ -146,13 +146,16 @@ export async function setTicketAIMode(ticketId: string, mode: 'minimal' | 'compl
   try {
     const user = await requireUser();
     requireRole(user, 'owner', 'admin');
+    const companyId = user.user_metadata?.company_id;
+    if (!companyId) return { error: 'Usuario sin empresa asignada' };
 
     const client = getClient();
 
     const { error } = await client
       .from('tickets')
       .update({ ai_mode: mode, updated_at: new Date().toISOString() })
-      .eq('id', ticketId);
+      .eq('id', ticketId)
+      .eq('company_id', companyId);
 
     if (error) return { error: error.message };
 
@@ -195,12 +198,15 @@ export async function setTicketPriority(ticketId: string, priority: number) {
   try {
     const user = await requireUser();
     requireRole(user, 'owner', 'admin');
+    const companyId = user.user_metadata?.company_id;
+    if (!companyId) return { error: 'Usuario sin empresa asignada' };
 
     const client = getClient();
     const { error } = await client
       .from('tickets')
       .update({ priority, updated_at: new Date().toISOString() })
-      .eq('id', ticketId);
+      .eq('id', ticketId)
+      .eq('company_id', companyId);
 
     if (error) return { error: error.message };
     return { error: null };
@@ -301,8 +307,10 @@ export async function createInvitation(prevState: { error: string; success: bool
     const currentRole = user.user_metadata?.role;
     requireRole(user, 'owner', 'admin');
 
+    const companyId = user.user_metadata?.company_id;
+    if (!companyId) return { error: 'Usuario sin empresa asignada', success: false };
+
     const parsed = CreateInvitationSchema.safeParse({
-      company_id: formData.get('company_id'),
       email: formData.get('email'),
       full_name: formData.get('full_name'),
       role: formData.get('role'),
@@ -312,7 +320,7 @@ export async function createInvitation(prevState: { error: string; success: bool
       return { error: parsed.error.issues.map((e: { message: string }) => e.message).join(', '), success: false };
     }
 
-    const { company_id: companyId, email, full_name: fullName, role: targetRole } = parsed.data;
+    const { email, full_name: fullName, role: targetRole } = parsed.data;
 
     // Admin solo puede invitar agents
     if (currentRole === 'admin' && targetRole === 'admin') {
@@ -325,6 +333,7 @@ export async function createInvitation(prevState: { error: string; success: bool
       .from('users')
       .select('id')
       .eq('email', email)
+      .eq('company_id', companyId)
       .maybeSingle();
 
     if (existing) {
@@ -564,17 +573,19 @@ export async function claimTicket(ticketId: string) {
     const user = await requireUser();
     const userId = user.id;
     const role = user.user_metadata?.role;
+    const userCompanyId = user.user_metadata?.company_id;
     if (role !== 'agent') return { error: 'Solo los agentes pueden tomar tickets', success: false };
 
     const client = getClient();
 
     const { data: ticket } = await client
       .from('tickets')
-      .select('status, assigned_to')
+      .select('status, assigned_to, company_id')
       .eq('id', ticketId)
       .single();
 
     if (!ticket) return { error: 'Ticket no encontrado', success: false };
+    if (ticket.company_id !== userCompanyId) return { error: 'No tienes permiso para tomar este ticket', success: false };
     if (ticket.status !== 'OPEN') return { error: 'Este ticket no está disponible para tomar', success: false };
     if (ticket.assigned_to) return { error: 'Este ticket ya está asignado a otro agente', success: false };
 
@@ -609,6 +620,23 @@ export async function getCompanyAgents(companyId: string) {
     return { agents: data || [] };
   } catch {
     return { agents: [] };
+  }
+}
+
+export async function getCompanyTags(companyId: string) {
+  try {
+    const client = getClient();
+    const { data } = await client
+      .from('tickets')
+      .select('tags')
+      .eq('company_id', companyId)
+      .not('tags', 'is', null);
+
+    if (!data) return { tags: [] };
+    const uniqueTags = [...new Set(data.flatMap((t) => t.tags as string[] || []))].sort();
+    return { tags: uniqueTags };
+  } catch {
+    return { tags: [] };
   }
 }
 
@@ -729,7 +757,7 @@ export async function getCompanyTokenUsage(companyId: string): Promise<{ report:
 
 export async function getTickets(
   companyId: string,
-  filters?: { priority?: string; status?: string; from?: string; to?: string; assigned_to?: string },
+  filters?: { priority?: string; status?: string; from?: string; to?: string; assigned_to?: string; tag?: string },
   options?: { limit?: number; offset?: number }
 ) {
   try {
@@ -764,6 +792,10 @@ export async function getTickets(
       query = query.lte('created_at', filters.to);
     }
 
+    if (filters?.tag) {
+      query = query.contains('tags', [filters.tag]);
+    }
+
     if (options?.limit) {
       query = query.limit(options.limit);
     }
@@ -789,12 +821,17 @@ export async function getTickets(
 
 export async function getTicket(id: string) {
   try {
+    const user = await requireUser();
+    const companyId = user.user_metadata?.company_id;
+    if (!companyId) return { error: 'Usuario sin empresa asignada', replies: [] };
+
     const client = getClient();
 
     const { data, error } = await client
       .from('tickets')
       .select('*')
       .eq('id', id)
+      .eq('company_id', companyId)
       .single();
 
     if (error) {
@@ -847,14 +884,16 @@ export async function sendReply(prevState: ReplyState, formData: FormData) {
     const agentName = authorName || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Agente';
 
     const client = getClient();
+    const userCompanyId = user.user_metadata?.company_id;
 
     const { data: ticket } = await client
       .from('tickets')
-      .select('status, assigned_to')
+      .select('status, assigned_to, company_id')
       .eq('id', ticketId)
       .single();
 
     if (!ticket) return { error: 'Ticket no encontrado', success: false };
+    if (ticket.company_id !== userCompanyId) return { error: 'No tienes permiso para responder este ticket', success: false };
     if (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') {
       return { error: 'Este ticket ya está resuelto o cerrado', success: false };
     }
