@@ -683,6 +683,17 @@ export async function getCompanyTokenUsage(companyId: string): Promise<{ report:
     const { start: cmStart, end: cmEnd } = getMonthRange(0);
     const { start: pmStart, end: pmEnd } = getMonthRange(-1);
 
+    // Get company plan for token limits
+    const { data: company } = await client
+      .from('companies')
+      .select('plan')
+      .eq('id', companyId)
+      .single();
+
+    const companyPlan = (company?.plan as string) || 'basic';
+    const PLAN_LIMITS: Record<string, number> = { basic: 10_000, complete: 100_000 };
+    const planLimit = PLAN_LIMITS[companyPlan] || 10_000;
+
     const { data: tickets, error } = await client
       .from('tickets')
       .select('id, title, created_at, ai_token_usage')
@@ -752,6 +763,8 @@ export async function getCompanyTokenUsage(companyId: string): Promise<{ report:
         };
       });
 
+    const planNames: Record<string, string> = { basic: 'Básico', complete: 'Completo' };
+
     const report: CompanyTokenUsageReport = {
       currentMonth: {
         total: { promptTokens: total.promptTokens, candidatesTokens: total.candidatesTokens, totalTokens: total.totalTokens },
@@ -763,6 +776,8 @@ export async function getCompanyTokenUsage(companyId: string): Promise<{ report:
       previousMonthTotal,
       previousMonthTicketCount: previousMonthTickets.length,
       dailyUsage,
+      planLimit,
+      planName: planNames[companyPlan] || 'Básico',
       recentTickets,
     };
 

@@ -101,6 +101,8 @@ export const CompanyTokenUsageReportSchema = z.object({
   previousMonthTotal: z.number(),
   previousMonthTicketCount: z.number(),
   dailyUsage: z.array(DailyTokenUsageSchema),
+  planLimit: z.number(),
+  planName: z.string(),
   recentTickets: z.array(z.object({
     id: z.string(),
     title: z.string(),

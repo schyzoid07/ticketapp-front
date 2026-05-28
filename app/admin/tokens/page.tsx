@@ -143,6 +143,36 @@ export default async function AdminTokensPage() {
         </div>
       </div>
 
+      {/* Plan Limit */}
+      <div className="mb-8 rounded-2xl border border-border bg-surface p-6 shadow-xs">
+        <div className="mb-4 flex items-center gap-2">
+          <Zap className="h-4 w-4 text-gray-400" />
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+            Límite del plan — {report.planName}
+          </h2>
+          <span className="ml-auto text-xs tabular-nums text-amber-600 font-semibold">
+            {formatNumber(currentMonth.total.totalTokens)} / {formatNumber(report.planLimit)} tokens
+          </span>
+        </div>
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
+          <div
+            className={`h-full rounded-full transition-all ${
+              (currentMonth.total.totalTokens / report.planLimit) > 0.9
+                ? 'bg-red-500'
+                : (currentMonth.total.totalTokens / report.planLimit) > 0.7
+                ? 'bg-amber-500'
+                : 'bg-emerald-500'
+            }`}
+            style={{ width: `${Math.min((currentMonth.total.totalTokens / report.planLimit) * 100, 100)}%` }}
+          />
+        </div>
+        {currentMonth.total.totalTokens >= report.planLimit && (
+          <p className="mt-2 text-xs text-red-600 font-medium">
+            Límite mensual alcanzado. Los próximos tickets no se procesarán con IA hasta el próximo mes.
+          </p>
+        )}
+      </div>
+
       {/* Bar Chart */}
       <div className="mb-8 rounded-2xl border border-border bg-surface p-6 shadow-xs">
         <div className="mb-4 flex items-center gap-2">
