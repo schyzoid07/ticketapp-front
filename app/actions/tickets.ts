@@ -147,9 +147,26 @@ export async function setTicketAIMode(ticketId: string, mode: 'minimal' | 'compl
     const user = await requireUser();
     requireRole(user, 'owner', 'admin');
     const companyId = user.user_metadata?.company_id;
+    const userRole = user.user_metadata?.role as string;
     if (!companyId) return { error: 'Usuario sin empresa asignada' };
 
     const client = getClient();
+
+    // Verificar plan si intenta cambiar a complete
+    if (mode === 'complete') {
+      const { data: company } = await client
+        .from('companies')
+        .select('plan')
+        .eq('id', companyId)
+        .single();
+
+      if (company?.plan === 'basic') {
+        if (userRole === 'owner') {
+          return { error: 'plan_restricted_owner' };
+        }
+        return { error: 'plan_restricted_admin' };
+      }
+    }
 
     const { error } = await client
       .from('tickets')

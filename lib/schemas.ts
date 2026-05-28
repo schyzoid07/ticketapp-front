@@ -156,6 +156,7 @@ export const CompanySchema = z.object({
   name: z.string(),
   slug: z.string(),
   webhook_url: z.string().nullable().optional(),
+  plan: z.enum(['basic', 'complete']).default('basic'),
 });
 
 export type Company = z.infer<typeof CompanySchema>;

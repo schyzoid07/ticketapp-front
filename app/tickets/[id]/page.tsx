@@ -120,7 +120,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               {!isResolved && canChangePriority && (
                 <>
                   <PrioritySelector ticketId={ticket.id} currentPriority={ticket.priority} />
-                  <AIModeSelector ticketId={ticket.id} currentMode={aiMode} />
+                  <AIModeSelector ticketId={ticket.id} currentMode={aiMode} userRole={currentRole} />
                 </>
               )}
               {cat && (
@@ -247,6 +247,31 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             </div>
           </div>
         )}
+
+        {/* Token Estimate */}
+        <div className="border-b border-border p-6">
+          <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+            <Zap className="h-3.5 w-3.5" />
+            Tokens estimados por proceso
+          </h2>
+          <div className="rounded-xl bg-gradient-to-br from-muted to-surface p-4">
+            <div className="grid grid-cols-2 gap-3 text-center text-xs">
+              <div className={`rounded-lg p-3 ${aiMode === 'minimal' ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-gray-50'}`}>
+                <p className="font-semibold text-gray-700 tabular-nums">~500</p>
+                <p className="mt-0.5 text-gray-500">Minimal (solo triaje)</p>
+                {aiMode === 'minimal' && <p className="mt-1 text-[10px] font-medium text-amber-600">Modo actual</p>}
+              </div>
+              <div className={`rounded-lg p-3 ${aiMode === 'complete' ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-gray-50'}`}>
+                <p className="font-semibold text-gray-700 tabular-nums">~2,500</p>
+                <p className="mt-0.5 text-gray-500">Complete (pipeline completo)</p>
+                {aiMode === 'complete' && <p className="mt-1 text-[10px] font-medium text-amber-600">Modo actual</p>}
+              </div>
+            </div>
+            <p className="mt-2 text-[10px] text-gray-400 text-center">
+              Valores promedio aproximados. El consumo real varía según la longitud del ticket y el historial del cliente.
+            </p>
+          </div>
+        </div>
 
         {/* Claim Button (OPEN + not assigned) */}
         {isClaimable && (
