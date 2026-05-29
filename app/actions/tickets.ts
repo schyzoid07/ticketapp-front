@@ -127,6 +127,24 @@ export async function createTicket(prevState: { error: string; ticket: TicketDat
       return { error: 'Error inesperado al crear ticket', ticket: null };
     }
 
+    // Fire backend AI processing (fire-and-forget)
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+    if (backendUrl && webhookSecret) {
+      fetch(`${backendUrl}/api/webhooks/process-ticket`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-webhook-secret': webhookSecret,
+        },
+        body: JSON.stringify({
+          type: 'INSERT',
+          table: 'tickets',
+          record: data,
+        }),
+      }).catch((err) => console.error('Error al procesar ticket con IA:', err));
+    }
+
     return { ticket: validated.data, error: '', rateLimit: { remaining: rateCheck.remaining, resetMinutes: rateCheck.resetMinutes } };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
@@ -556,6 +574,54 @@ export async function updateCompanyWebhook(formData: FormData) {
     console.error('Error al actualizar webhook:', err);
     const { redirect } = await import('next/navigation');
     redirect(`/profile?error=${encodeURIComponent(err instanceof Error ? err.message : 'Error desconocido')}`);
+  }
+}
+
+export async function reprocessTicket(ticketId: string) {
+  try {
+    const user = await requireUser();
+    const companyId = user.user_metadata?.company_id;
+    if (!companyId) return { error: 'Usuario sin empresa asignada' };
+
+    const client = getClient();
+
+    const { data: ticket } = await client
+      .from('tickets')
+      .select('*')
+      .eq('id', ticketId)
+      .eq('company_id', companyId)
+      .single();
+
+    if (!ticket) return { error: 'Ticket no encontrado' };
+    if (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') {
+      return { error: 'No se puede re-analizar un ticket resuelto o cerrado' };
+    }
+
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+    if (!webhookSecret) return { error: 'Webhook secret no configurado' };
+
+    const response = await fetch(`${backendUrl}/api/webhooks/process-ticket`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-webhook-secret': webhookSecret,
+      },
+      body: JSON.stringify({ type: 'INSERT', table: 'tickets', record: ticket }),
+      signal: AbortSignal.timeout(60000),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return { error: `Error al re-analizar: ${text}` };
+    }
+
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath(`/tickets/${ticketId}`);
+
+    return { success: true, error: null };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Error desconocido' };
   }
 }
 

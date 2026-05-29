@@ -20,6 +20,7 @@ import { TicketReply } from '@/components/ticket-reply';
 import { PrioritySelector } from '@/components/priority-selector';
 import { AIModeSelector } from '@/components/ai-mode-selector';
 import { ClaimButton } from '@/components/claim-button';
+import { ReanalyzeButton } from '@/components/reanalyze-button';
 import { createServerSupabase } from '@/lib/supabase-server';
 
 const categoryMeta: Record<string, { icon: typeof Bug; label: string; gradient: string }> = {
@@ -262,13 +263,16 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
 
         {/* Token Usage */}
         <div className="border-b border-border p-6">
-          <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
-            <Zap className="h-3.5 w-3.5" />
-            Tokens consumidos (Gemini)
-            <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-normal normal-case tracking-normal text-gray-500">
-              {aiMode === 'minimal' ? 'Solo triaje' : 'Completo'}
-            </span>
-          </h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              <Zap className="h-3.5 w-3.5" />
+              Tokens consumidos (Gemini)
+              <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-normal normal-case tracking-normal text-gray-500">
+                {aiMode === 'minimal' ? 'Solo triaje' : 'Completo'}
+              </span>
+            </h2>
+            {!isResolved && <ReanalyzeButton ticketId={ticket.id} />}
+          </div>
           {tokenUsage ? (
             <div className="rounded-xl bg-gradient-to-br from-muted to-surface p-4">
               <div className="grid grid-cols-4 gap-2 text-center text-xs">
