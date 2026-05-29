@@ -491,7 +491,7 @@ export async function getCompanyById(companyId: string) {
     const client = getClient();
     const { data, error } = await client
       .from('companies')
-      .select('id, name, slug, webhook_url, plan, weekly_report')
+      .select('id, name, slug, webhook_url, plan, weekly_report, alerts')
       .eq('id', companyId)
       .single();
 
@@ -604,6 +604,47 @@ export async function saveWeeklyReportConfig(formData: FormData) {
     revalidatePath('/profile');
   } catch (err) {
     console.error('Error al guardar config de reporte:', err);
+    const { redirect } = await import('next/navigation');
+    redirect(`/profile?error=${encodeURIComponent(err instanceof Error ? err.message : 'Error desconocido')}`);
+  }
+}
+
+export async function saveAlertsConfig(formData: FormData) {
+  try {
+    const user = await requireUser();
+    const role = user.user_metadata?.role;
+    if (role !== 'owner') throw new Error('Solo el dueño puede configurar alertas');
+
+    const companyId = user.user_metadata?.company_id as string;
+    const emailEnabled = formData.get('email_enabled') === 'on';
+    const emailRecipientsRaw = formData.get('email_recipients') as string;
+    const telegramToken = (formData.get('telegram_token') as string) || '';
+    const telegramChatId = (formData.get('telegram_chat_id') as string) || '';
+
+    const emailRecipients = emailRecipientsRaw
+      .split(/[\n,]+/)
+      .map((e: string) => e.trim())
+      .filter((e: string) => e.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+
+    const client = getClient();
+    const { error } = await client
+      .from('companies')
+      .update({
+        alerts: {
+          email_enabled: emailEnabled,
+          email_recipients: emailRecipients,
+          telegram_token: telegramToken || null,
+          telegram_chat_id: telegramChatId || null,
+        },
+      })
+      .eq('id', companyId);
+
+    if (error) throw new Error(error.message);
+
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath('/profile');
+  } catch (err) {
+    console.error('Error al guardar alertas:', err);
     const { redirect } = await import('next/navigation');
     redirect(`/profile?error=${encodeURIComponent(err instanceof Error ? err.message : 'Error desconocido')}`);
   }

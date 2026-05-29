@@ -4,6 +4,7 @@ import { getCompanyById, updateCompanyName, updateCompanyWebhook, checkUserBlock
 import { CopyButton } from '@/components/copy-button';
 import { ChangePasswordForm } from '@/components/change-password-form';
 import { WeeklyReportConfig } from '@/components/weekly-report-config';
+import { AlertsConfig } from '@/components/alerts-config';
 import {
   User,
   Building2,
@@ -39,6 +40,7 @@ export default async function ProfilePage() {
   const isBlocked = isAgent ? await checkUserBlocked(user.id) : false;
 
   const { company } = await getCompanyById(companyId);
+  const isCompletePlan = company?.plan === 'complete';
   const roleMeta = roleLabels[role] || roleLabels.agent;
   const RoleIcon = roleMeta.icon;
 
@@ -202,6 +204,13 @@ export default async function ProfilePage() {
         {isOwner && (
           <div className="border-b border-border p-6">
             <WeeklyReportConfig companyId={companyId} config={company?.weekly_report as { enabled?: boolean; recipients?: string[] } | null} />
+          </div>
+        )}
+
+        {/* Alertas en tiempo real (Owner + Plan Complete) */}
+        {isOwner && isCompletePlan && (
+          <div className="border-b border-border p-6">
+            <AlertsConfig config={company?.alerts as { email_enabled?: boolean; email_recipients?: string[]; telegram_token?: string | null; telegram_chat_id?: string | null } | null} />
           </div>
         )}
 
