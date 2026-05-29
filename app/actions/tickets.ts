@@ -491,7 +491,7 @@ export async function getCompanyById(companyId: string) {
     const client = getClient();
     const { data, error } = await client
       .from('companies')
-      .select('id, name, slug, webhook_url, plan')
+      .select('id, name, slug, webhook_url, plan, weekly_report')
       .eq('id', companyId)
       .single();
 
@@ -572,6 +572,38 @@ export async function updateCompanyWebhook(formData: FormData) {
     revalidatePath('/profile');
   } catch (err) {
     console.error('Error al actualizar webhook:', err);
+    const { redirect } = await import('next/navigation');
+    redirect(`/profile?error=${encodeURIComponent(err instanceof Error ? err.message : 'Error desconocido')}`);
+  }
+}
+
+export async function saveWeeklyReportConfig(formData: FormData) {
+  try {
+    const user = await requireUser();
+    const role = user.user_metadata?.role;
+    if (role !== 'owner') throw new Error('Solo el dueño puede configurar el reporte semanal');
+
+    const companyId = user.user_metadata?.company_id as string;
+    const enabled = formData.get('enabled') === 'on';
+    const recipientsRaw = formData.get('recipients') as string;
+
+    const recipients = recipientsRaw
+      .split(/[\n,]+/)
+      .map((e: string) => e.trim())
+      .filter((e: string) => e.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+
+    const client = getClient();
+    const { error } = await client
+      .from('companies')
+      .update({ weekly_report: { enabled, recipients } })
+      .eq('id', companyId);
+
+    if (error) throw new Error(error.message);
+
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath('/profile');
+  } catch (err) {
+    console.error('Error al guardar config de reporte:', err);
     const { redirect } = await import('next/navigation');
     redirect(`/profile?error=${encodeURIComponent(err instanceof Error ? err.message : 'Error desconocido')}`);
   }

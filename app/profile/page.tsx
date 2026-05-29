@@ -3,6 +3,7 @@ import { createServerSupabase } from '@/lib/supabase-server';
 import { getCompanyById, updateCompanyName, updateCompanyWebhook, checkUserBlocked } from '@/app/actions/tickets';
 import { CopyButton } from '@/components/copy-button';
 import { ChangePasswordForm } from '@/components/change-password-form';
+import { WeeklyReportConfig } from '@/components/weekly-report-config';
 import {
   User,
   Building2,
@@ -194,6 +195,13 @@ export default async function ProfilePage() {
                 </button>
               </form>
             </div>
+          </div>
+        )}
+
+        {/* Weekly Report Config (Owner only) */}
+        {isOwner && (
+          <div className="border-b border-border p-6">
+            <WeeklyReportConfig companyId={companyId} config={company?.weekly_report as { enabled?: boolean; recipients?: string[] } | null} />
           </div>
         )}
 
